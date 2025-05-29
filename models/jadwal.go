@@ -13,3 +13,7 @@ type Jadwal struct {
 	MataKuliah   MataKuliah `json:"mata_kuliah" gorm:"foreignKey:MataKuliahID"`
 	Dosen        Dosen      `json:"dosen" gorm:"foreignKey:DosenID"`
 }
+
+func (Jadwal) TableName() string {
+	return "jadwals"
+}

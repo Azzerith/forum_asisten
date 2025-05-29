@@ -21,5 +21,5 @@ func InitDB() {
 	}
 	DB = db
 	fmt.Println("Database terkoneksi.")
-	db.AutoMigrate(&models.ProgramStudi{}, &models.MataKuliah{},&models.Dosen{}, &models.Jadwal{})
+	db.AutoMigrate(&models.ProgramStudi{}, &models.MataKuliah{},&models.Dosen{}, &models.Jadwal{},&models.User{},&models.AsistenKelas{})
 }
