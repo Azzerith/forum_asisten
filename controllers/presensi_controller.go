@@ -66,9 +66,37 @@ func CreatePresensi(c *gin.Context) {
 		"message": "Presensi berhasil disimpan",
 		"data":    input,
 	})
+
+	// Update rekapitulasi
+	var rekap models.Rekapitulasi
+	if err := config.DB.Where("asisten_id = ?", input.AsistenID).First(&rekap).Error; err != nil {
+		// Belum ada rekap, buat baru
+		rekap = models.Rekapitulasi{
+			AsistenID: input.AsistenID,
+		}
+	}
+
+	switch input.Status {
+	case "hadir":
+		if input.Jenis == "utama" {
+			rekap.JumlahHadir++
+		} else if input.Jenis == "pengganti" {
+			rekap.JumlahPengganti++
+		}
+	case "izin":
+		rekap.JumlahIzin++
+	case "alpha":
+		rekap.JumlahAlpha++
+	}
+
+	rekap.TotalHonor = rekap.HonorPertemuan * (rekap.JumlahHadir + rekap.JumlahPengganti)
+
+	if err := config.DB.Save(&rekap).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui rekapitulasi"})
+		return
+	}
+
 }
-
-
 
 func GetAllPresensi(c *gin.Context) {
 	var data []models.Presensi
