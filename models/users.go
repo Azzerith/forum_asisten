@@ -8,3 +8,4 @@ type User struct {
 	Role     string `json:"role"`
 	NIM      *string `json:"nim,omitempty"`
 }
+

@@ -15,8 +15,16 @@ type LoginInput struct {
 	Password string `json:"password"`
 }
 
+type RegisterInput struct {
+	Nama     string  `json:"nama" binding:"required"`
+	Email    string  `json:"email" binding:"required,email"`
+	Password string  `json:"password" binding:"required"`
+	Role     string  `json:"role" binding:"required"`
+	NIM      *string `json:"nim,omitempty"`
+}
+
 func Register(c *gin.Context) {
-	var input models.User
+	var input RegisterInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
@@ -33,14 +41,23 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	input.Password = hashedPassword
-	if err := config.DB.Create(&input).Error; err != nil {
+	// Buat objek User dari input
+	user := models.User{
+		Nama:     input.Nama,
+		Email:    input.Email,
+		Password: hashedPassword,
+		Role:     input.Role,
+		NIM:      input.NIM,
+	}
+
+	if err := config.DB.Create(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat user"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "User berhasil dibuat"})
 }
+
 
 
 func Login(c *gin.Context) {

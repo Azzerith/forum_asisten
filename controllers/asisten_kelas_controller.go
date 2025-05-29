@@ -3,22 +3,14 @@ package controllers
 import (
 	"forum_asisten/config"
 	"forum_asisten/models"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 func PilihJadwalAsisten(c *gin.Context) {
-	var input struct {
-		JadwalID uint `json:"jadwal_id" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Ambil ID user dan role dari JWT
-	asistenID := c.GetUint("user_id")
+	// Ambil ID user dan role dari token
+	userID := c.GetUint("user_id")
 	role := c.GetString("role")
 
 	if role != "asisten" {
@@ -26,29 +18,45 @@ func PilihJadwalAsisten(c *gin.Context) {
 		return
 	}
 
-	// Cari NIM asisten dari tabel users
-	var asisten struct {
-		NIM string
+	// Ambil hanya jadwal_id dari input JSON
+	var input struct {
+		JadwalID uint `json:"jadwal_id" binding:"required"`
 	}
-	if err := config.DB.Table("users").Select("nim").Where("id = ?", asistenID).Scan(&asisten).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data asisten"})
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	newData := models.AsistenKelas{
-		JadwalID:  input.JadwalID,
-		AsistenID: asistenID,
-		NIM:       asisten.NIM,
+	// Ambil data NIM dari user yang sedang login
+	var user models.User
+	if err := config.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data pengguna"})
+		return
 	}
 
-	if err := config.DB.Create(&newData).Error; err != nil {
+	// Cek apakah user sudah pernah memilih jadwal ini sebelumnya
+	var existing models.AsistenKelas
+	if err := config.DB.
+		Where("jadwal_id = ? AND asisten_id = ?", input.JadwalID, userID).
+		First(&existing).Error; err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Jadwal sudah pernah dipilih"})
+		return
+	}
+
+	// Simpan ke tabel asisten_kelas
+	asistenKelas := models.AsistenKelas{
+		JadwalID:  input.JadwalID,
+		AsistenID: userID,
+		NIM:       *user.NIM,
+	}
+
+	if err := config.DB.Create(&asistenKelas).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memilih jadwal"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Berhasil memilih jadwal", "data": newData})
+	c.JSON(http.StatusOK, gin.H{"message": "Berhasil memilih jadwal", "data": asistenKelas})
 }
-
 
 func GetJadwalAsisten(c *gin.Context) {
 	userID := c.GetUint("user_id") // dari JWT
