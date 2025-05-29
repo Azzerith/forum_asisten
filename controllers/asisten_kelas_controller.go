@@ -46,7 +46,7 @@ func PilihJadwalAsisten(c *gin.Context) {
 		return
 	}
 
-	// Ambil data user (untuk NIM)
+	// Ambil data user
 	var user models.User
 	if err := config.DB.First(&user, userID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data pengguna"})

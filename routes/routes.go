@@ -17,12 +17,15 @@ func SetupRoutes(r *gin.Engine) {
 		api.GET("/dosen", controllers.GetAllDosen)
 		api.GET("/jadwal", controllers.GetAllJadwal)
 		api.GET("/asisten-kelas", controllers.GetJadwalAsisten)
+		api.GET("/presensi", controllers.GetAllPresensi)
 
 		protected := api.Group("/")
 		protected.Use(middlewares.AuthMiddleware())
 		{
 			protected.POST("/asisten-kelas", controllers.PilihJadwalAsisten)
 
+			protected.POST("/presensi", controllers.CreatePresensi)
+			
 		}
 		admin := api.Group("/admin")
 		admin.Use(middlewares.AuthMiddleware(), middlewares.AdminMiddleware())
