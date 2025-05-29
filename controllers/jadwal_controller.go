@@ -36,7 +36,7 @@ func CreateJadwal(c *gin.Context) {
 
 func GetAllJadwal(c *gin.Context) {
 	var jadwal []models.Jadwal
-	if err := config.DB.Preload("Dosen").Preload("MataKuliah").Find(&jadwal).Error; err != nil {
+	if err := config.DB.Preload("Dosen").Preload("MataKuliah").Preload("MataKuliah.ProgramStudi").Find(&jadwal).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data jadwal"})
 		return
 	}

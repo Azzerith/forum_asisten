@@ -81,17 +81,12 @@ func PilihJadwalAsisten(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Berhasil memilih jadwal", "data": asistenKelas})
 }
 
-
-
 func GetJadwalAsisten(c *gin.Context) {
-	userID := c.GetUint("user_id") // dari JWT
+	// userID := c.GetUint("user_id") // dari JWT
 	var data []models.AsistenKelas
 
-	if err := config.DB.
-    Where("asisten_id = ?", userID).
-    Preload("Jadwal").
-    Preload("User").
-    Find(&data).Error; err != nil {
+	if err := config.DB.Preload("Jadwal").Preload("User").Preload("Jadwal.MataKuliah.ProgramStudi").Preload("Jadwal.Dosen").
+		Find(&data).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data"})
 		return
 	}
