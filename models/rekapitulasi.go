@@ -9,7 +9,7 @@ type Rekapitulasi struct {
 	JumlahPengganti int    `json:"jumlah_pengganti"`
 	TipeHonor       string `json:"tipe_honor"` // A, B, C, D, E
 	HonorPertemuan  int    `json:"honor_pertemuan"`
-	TotalHonor      int    `json:"total_honor"`
+	TotalHonor      int    `json:"total_honor" gorm:"->"`
 	Asisten         User   `json:"asisten" gorm:"foreignKey:AsistenID"`
 }
 

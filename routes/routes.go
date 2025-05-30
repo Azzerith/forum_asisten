@@ -18,8 +18,7 @@ func SetupRoutes(r *gin.Engine) {
 		api.GET("/jadwal", controllers.GetAllJadwal)
 		api.GET("/asisten-kelas", controllers.GetJadwalAsisten)
 		api.GET("/presensi", controllers.GetAllPresensi)
-		// api.GET("/rekapitulasi", controllers.GetAllRekapitulasi)
-		// api.GET("/rekapitulasi/:asisten_id", controllers.GetRekapByAsistenID)
+		api.GET("/rekapitulasi", controllers.GetRekapitulasi)
 
 		protected := api.Group("/")
 		protected.Use(middlewares.AuthMiddleware())
@@ -52,6 +51,9 @@ func SetupRoutes(r *gin.Engine) {
 			admin.DELETE("/asisten-kelas/:id", controllers.DeleteAsistenKelas)
 
 			admin.POST("/rekapitulasi", controllers.SetTipeHonor)
+
+			admin.PUT("/rekapitulasi/:id", controllers.UpdateRekapitulasi)
+			admin.DELETE("/rekapitulasi/:id", controllers.DeleteRekapitulasi)
 		}
 
 	}
