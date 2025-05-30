@@ -2,12 +2,13 @@ package utils
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte("rahasia-asisten")
+var jwtKey = []byte(os.Getenv("JWT_SECRET"))
 
 func GenerateJWT(userID uint, role string) (string, error) {
 	claims := jwt.MapClaims{
@@ -44,4 +45,3 @@ func VerifyToken(tokenStr string) (jwt.MapClaims, error) {
 	}
 	return claims, nil
 }
-
