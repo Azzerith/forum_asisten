@@ -19,6 +19,8 @@ func SetupRoutes(r *gin.Engine) {
 		api.GET("/asisten-kelas", controllers.GetJadwalAsisten)
 		api.GET("/presensi", controllers.GetAllPresensi)
 		api.GET("/rekapitulasi", controllers.GetRekapitulasi)
+		api.GET("/sanggah", controllers.GetSemuaSanggah)
+		api.GET("/sanggah/:id", controllers.GetSanggahByID)
 
 		protected := api.Group("/")
 		protected.Use(middlewares.AuthMiddleware())
@@ -26,6 +28,8 @@ func SetupRoutes(r *gin.Engine) {
 			protected.POST("/asisten-kelas", controllers.PilihJadwalAsisten)
 
 			protected.POST("/presensi", controllers.CreatePresensi)
+
+			protected.POST("/sanggah", controllers.BuatSanggah)
 
 		}
 		admin := api.Group("/admin")
