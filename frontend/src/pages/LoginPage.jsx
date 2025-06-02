@@ -14,6 +14,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const res = await axios.post("http://localhost:8080/api/login", { email, password });
+      // console.log(res.data);
       localStorage.setItem("token", res.data.token);
       navigate("/home");
     } catch (error) {
