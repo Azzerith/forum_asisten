@@ -74,7 +74,7 @@ export default function Sidebar() {
                 {[
                   { path: "/home", name: "Home", icon: "🏠" },
                   { path: "/mata-kuliah", name: "Mata Kuliah", icon: "📚" },
-                  { path: "#", name: "Presensi", icon: "📝" },
+                  { path: "/presensi", name: "Presensi", icon: "📝" },
                   { path: "/rekapitulasi", name: "Rekapitulasi", icon: "📊" },
                   { path: "/jadwal", name: "Jadwal Asisten", icon: "⏰" }
                 ].map((item, index) => (
