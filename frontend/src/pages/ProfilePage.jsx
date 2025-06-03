@@ -20,29 +20,44 @@ export default function ProfilePage() {
         fetchPresensiData(payload.id);
       } catch (err) {
         console.error("Token tidak valid", err);
+        setLoading(false);
       }
+    } else {
+      setLoading(false);
     }
   }, []);
 
   const fetchPresensiData = async (asistenId) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    
     try {
-      const response = await fetch("http://localhost:8080/api/presensi");
-      const data = await response.json();
-      // Filter data berdasarkan asisten_id yang login
-      const filteredData = data.filter(item => item.asisten_id === asistenId);
-      setPresensiData(filteredData);
+      const presensiResponse = await fetch('http://localhost:8080/api/presensi', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+  
+      if (!presensiResponse.ok) {
+        throw new Error('Failed to fetch presensi data');
+      }
+  
+      const presensiResult = await presensiResponse.json();
+      setPresensiData(presensiResult.data || []);
       setLoading(false);
+      console.log(presensiResult.data);
     } catch (error) {
-      console.error("Gagal mengambil data presensi:", error);
+      console.error('Error fetching presensi data:', error);
       setLoading(false);
     }
   };
 
+  // Add the missing handleEdit function
   const handleEdit = () => {
     setIsEditing(!isEditing);
   };
 
-  // Hitung statistik presensi
+  // Add the missing countPresensi function
   const countPresensi = () => {
     const stats = {
       hadir: 0,
