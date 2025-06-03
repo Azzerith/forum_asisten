@@ -16,9 +16,9 @@ func SetupRoutes(r *gin.Engine) {
 		api.GET("/mata-kuliah", controllers.GetAllMataKuliah)
 		api.GET("/dosen", controllers.GetAllDosen)
 		api.GET("/jadwal", controllers.GetAllJadwal)
-		api.GET("/asisten-kelas", controllers.GetJadwalAsisten)
-		api.GET("/presensi", controllers.GetAllPresensi)
-		api.GET("/rekapitulasi", controllers.GetRekapitulasi)
+		// api.GET("/asisten-kelas", controllers.GetJadwalAsisten)
+		// api.GET("/presensi", controllers.GetAllPresensi)
+		// api.GET("/rekapitulasi", controllers.GetRekapitulasi)
 		api.GET("/sanggah", controllers.GetSemuaSanggah)
 		api.GET("/sanggah/:id", controllers.GetSanggahByID)
 
@@ -26,10 +26,16 @@ func SetupRoutes(r *gin.Engine) {
 		protected.Use(middlewares.AuthMiddleware())
 		{
 			protected.POST("/asisten-kelas", controllers.PilihJadwalAsisten)
+			protected.DELETE("/asisten-kelas/:id", controllers.DeleteAsistenKelas)
 
 			protected.POST("/presensi", controllers.CreatePresensi)
+			protected.GET("/presensi", controllers.GetAllPresensi)
 
 			protected.POST("/sanggah", controllers.BuatSanggah)
+
+			protected.GET("/asisten-kelas", controllers.GetJadwalAsisten)
+			protected.GET("/api/asisten-kelas/user/:user_id", controllers.GetJadwalAsistenById)
+			protected.GET("/rekapitulasi", controllers.GetRekapitulasi)
 
 		}
 		admin := api.Group("/admin")
