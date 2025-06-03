@@ -4,8 +4,10 @@ import (
 	"forum_asisten/config"
 	"forum_asisten/models"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func PilihJadwalAsisten(c *gin.Context) {
@@ -94,6 +96,48 @@ func GetJadwalAsisten(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
+func GetJadwalAsistenById(c *gin.Context) {
+    // Get user ID from path parameter
+    userId := c.Param("user_id")
+    if userId == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "User ID must be provided"})
+        return
+    }
+
+    // Convert userID to uint
+    userID, err := strconv.ParseUint(userId, 10, 32)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+        return
+    }
+
+    var data []models.AsistenKelas
+
+    // Query with proper joins and preloading
+    if err := config.DB.
+        Preload("Jadwal", func(db *gorm.DB) *gorm.DB {
+            return db.Preload("MataKuliah.ProgramStudi").Preload("Dosen")
+        }).
+        Preload("User").
+        Where("asisten_id = ?", uint(userID)).
+        Find(&data).Error; err != nil {
+            
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "error": "Failed to fetch data",
+            "details": err.Error(),
+        })
+        return
+    }
+
+    // Handle empty result
+    if len(data) == 0 {
+        c.JSON(http.StatusOK, []models.AsistenKelas{})
+        return
+    }
+
+    c.JSON(http.StatusOK, data)
+}
+
 func UpdateAsistenKelas(c *gin.Context) {
 	id := c.Param("id")
 	var data models.AsistenKelas
@@ -111,11 +155,6 @@ func UpdateAsistenKelas(c *gin.Context) {
 
 	data.JadwalID = input.JadwalID
 	data.AsistenID = input.AsistenID
-	// data.Nama = input.Nama
-	// data.Hadir = input.Hadir
-	// data.Izin = input.Izin
-	// data.Alpha = input.Alpha
-	// data.Pengganti = input.Pengganti
 
 	if err := config.DB.Save(&data).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengupdate data"})
