@@ -52,6 +52,8 @@ const RekapitulasiPage = () => {
 
   // Group attendance data by mata kuliah
   const groupByMataKuliah = () => {
+    console.log("presensiData:", presensiData);
+
     const grouped = {};
     
     // Add a check to ensure presensiData is an array

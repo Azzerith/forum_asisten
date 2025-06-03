@@ -19,7 +19,11 @@ export default function JadwalAsistenPage() {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         console.log("Token payload:", payload); // Debug token content
-        setUser(payload);
+        setUser({
+          id: payload.user_id,
+          ...payload
+        });
+        
       } catch (err) {
         console.error("Token parsing error:", err);
         navigate("/login");
@@ -30,43 +34,43 @@ export default function JadwalAsistenPage() {
   }, [navigate]);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.user_id) return;
 
     const fetchSchedules = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        console.log("Fetching schedules for user ID:", user.id); // Debug log
-        console.log(jadwal);
+    
         const response = await axios.get(
-          `http://localhost:8080/api/asisten-kelas/user/${user.id}`,
+          "http://localhost:8080/api/asisten-kelas",
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
-              'Content-Type': 'application/json'
+              "Content-Type": "application/json"
             }
           }
         );
-
-        console.log("API Response:", response.data); // Debug log
-        
-        if (!Array.isArray(response.data)) {
-          throw new Error("Invalid data format received");
-        }
-
-        setSchedules(response.data);
+    
+        const allSchedules = response.data;
+    
+        // Debug log
+        console.log("All schedules:", allSchedules);
+        console.log("User from token:", user);
+    
+        // Pastikan user.id adalah number
+        const userSchedules = allSchedules.filter(item => item.asisten_id === Number(user.user_id));
+    
+        console.log("Filtered schedules:", userSchedules);
+    
+        setSchedules(userSchedules);
       } catch (err) {
-        console.error("Fetch error details:", {
-          error: err,
-          response: err.response?.data
-        });
+        console.error("Fetch error:", err);
         setError(err.response?.data?.error || err.message || "Failed to load schedules");
       } finally {
         setLoading(false);
       }
     };
-
+    
     fetchSchedules();
   }, [user?.id]);
 
