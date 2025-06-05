@@ -6,6 +6,7 @@ const RekapitulasiPage = () => {
   const [presensiData, setPresensiData] = useState([]);
   const [rekapitulasiData, setRekapitulasiData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,6 +26,7 @@ const RekapitulasiPage = () => {
     
         const presensiResult = await presensiResponse.json();
         setPresensiData(presensiResult.data || []);
+        console.log("Presensi result:", presensiResult);
     
         // Fetch honor data with Authorization header
         const rekapitulasiResponse = await fetch('http://localhost:8080/api/rekapitulasi', {
@@ -39,7 +41,8 @@ const RekapitulasiPage = () => {
     
         const rekapitulasiResult = await rekapitulasiResponse.json();
         setRekapitulasiData(rekapitulasiResult.data || []);
-    
+        console.log("Rekapitulasi result:", rekapitulasiResult);
+        
         setLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -80,6 +83,7 @@ const RekapitulasiPage = () => {
   };
 
   const mataKuliahGroups = groupByMataKuliah();
+  // console.log("Grouped Mata Kuliah:", mataKuliahGroups);
 
   const statusColors = {
     hadir: 'bg-green-100 text-green-800',
