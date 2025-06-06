@@ -1,114 +1,143 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { motion } from "framer-motion";
 import SidebarMenu from "../components/Sidebar";
-import { FiPaperclip } from "react-icons/fi";
+import { FiCheckCircle, FiPaperclip } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
-
-const PresensiPage = () => {
-  const [user, setUser] = useState(null);
+export default function PresensiPage() {
   const [jadwal, setJadwal] = useState(null);
-  const [jadwalDipilih, setJadwalDipilih] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState("hadir");
-  const [isiMateri, setIsiMateri] = useState("");
-  const [buktiKehadiran, setBuktiKehadiran] = useState("");
-  const [buktiIzin, setBuktiIzin] = useState("");
-  const [fileKehadiran, setFileKehadiran] = useState(null);
-const [fileIzin, setFileIzin] = useState(null);
+  const [user, setUser] = useState(null);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-
+  // Ambil user dari token
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split(".")[1]));
-        setUser(payload);
-        fetchPresensiData(payload.id, token);
+        console.log("Token payload:", payload);
+        setUser({ user_id: payload.user_id, ...payload });
       } catch (err) {
-        console.error("Token tidak valid", err);
-        setLoading(false);
+        console.error("Token parsing error:", err);
+        navigate("/login");
       }
     } else {
-      setLoading(false);
+      navigate("/login");
     }
-  }, []);
+  }, [navigate]);
 
-  const fetchPresensiData = async (userId, token) => {
-    try {
-      const res = await axios.get("http://localhost:8080/api/asisten-kelas", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      let jadwalAsisten = Array.isArray(res.data) ? res.data[0] : res.data;
-
-      console.log("API Response:", res.data);
-
-      setJadwal(jadwalAsisten);
-    } catch (err) {
-      console.error("Gagal mengambil data jadwal", err);
-    } finally {
-      setLoading(false);
-    }
+  // Fungsi bantu: cek apakah jadwal hari ini
+  const isTodaySchedule = (jadwalItem) => {
+    const today = new Date();
+    const hari = today.toLocaleDateString("id-ID", { weekday: "long" });
+    return jadwalItem.jadwal?.hari === hari;
   };
 
-  const uploadToCloudinary = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "forum_asisten");
-    formData.append("cloud_name", "azzerith");
-  
-    try {
-      const res = await axios.post("https://api.cloudinary.com/v1_1/azzerith/image/upload", formData);
-      return res.data.secure_url;
-    } catch (err) {
-      console.error("Upload Gagal", err);
-      return null;
-    }
-  };
-  
+  // Ambil data presensi/jadwal asisten
+  useEffect(() => {
+    if (!user?.user_id) return;
 
-  const handleSubmit = async () => {
-    const token = localStorage.getItem("token");
-    const payload = {
-      jadwal_id: jadwal.jadwal_id,
-      jenis: "utama",
-      status: status,
-    };
-  
-    try {
-      if (status === "hadir") {
-        const uploadedURL = await uploadToCloudinary(fileKehadiran);
-        if (!uploadedURL) return alert("Upload bukti kehadiran gagal.");
-        payload.bukti_kehadiran = uploadedURL;
-        payload.isi_materi = isiMateri;
-      } else if (status === "izin") {
-        const uploadedURL = await uploadToCloudinary(fileIzin);
-        if (!uploadedURL) return alert("Upload bukti izin gagal.");
-        payload.bukti_izin = uploadedURL;
+    const fetchPresensiData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const res = await axios.get("http://localhost:8080/api/asisten-kelas", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        const allJadwal = Array.isArray(res.data) ? res.data : [res.data];
+        console.log("All jadwal:", allJadwal);
+
+        const userJadwal = allJadwal.filter((item) => item.asisten_id === Number(user.user_id));
+        const currentJadwal = userJadwal.find((item) => isTodaySchedule(item));
+
+        console.log("Filtered jadwal for today:", currentJadwal);
+        setJadwal(currentJadwal);
+      } catch (err) {
+        console.error("Gagal mengambil data jadwal", err);
+        setError(err.response?.data?.error || err.message || "Gagal mengambil data");
+      } finally {
+        setLoading(false);
       }
-  
-      await axios.post("http://localhost:8080/api/presensi", payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-  
-      alert("Presensi berhasil dikirim");
-    } catch (err) {
-      console.error("Gagal mengirim presensi", err);
-    }
-  };
-  
+    };
 
-  if (loading) return <p>Loading...</p>;
-  if (!jadwal || !jadwal.jadwal || !jadwal.jadwal.mata_kuliah)
-    return <p>Tidak ada jadwal saat ini</p>;
+    fetchPresensiData();
+  }, [user?.user_id]);
 
-  const jadwalInfo = jadwal?.jadwal;
+  // UI saat loading
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-gray-50">
+        <SidebarMenu />
+        <main className="flex-1 p-6 flex justify-center items-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Memuat data presensi...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
+  // UI saat error
+  if (error) {
+    return (
+      <div className="flex min-h-screen bg-gray-50">
+        <SidebarMenu />
+        <main className="flex-1 p-6 flex justify-center items-center">
+          <div className="text-center text-red-500">
+            <p>Gagal memuat data: {error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Coba Lagi
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // UI jika tidak ada jadwal hari ini
+  if (!jadwal) {
+    return (
+      <div className="flex min-h-screen min-w-screen bg-gray-50">
+        <SidebarMenu />
+        <main className="flex-1 flex items-center justify-center p-6">
+          <motion.div
+            className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="text-6xl mb-4">📭</div>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+              Tidak Ada Jadwal Hari Ini
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Kamu tidak memiliki jadwal mengajar pada hari dan jam ini. Silakan
+              cek kembali nanti atau hubungi koordinator jika ada kesalahan.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-all"
+            >
+              Muat Ulang
+            </button>
+          </motion.div>
+        </main>
+      </div>
+    );
+  }
+
+  // UI jika jadwal ditemukan
   return (
     <div className="flex min-h-screen min-w-screen bg-gray-50">
       <SidebarMenu />
@@ -245,6 +274,4 @@ const [fileIzin, setFileIzin] = useState(null);
       </main>
     </div>
   );
-};
-
-export default PresensiPage;
+}
