@@ -4,7 +4,7 @@ import axios from "axios";
 import logo from "../assets/logoFA.png";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -12,13 +12,24 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+
     try {
-      const res = await axios.post("http://localhost:8080/api/login", { email, password });
-      // console.log(res.data);
-      localStorage.setItem("token", res.data.token);
-      navigate("/home");
+      const res = await axios.post("http://localhost:8080/api/login", {
+        identifier,
+        password,
+      });
+
+      const { token, user } = res.data;
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      if (user.role === "admin") {
+        navigate("/admin/home");
+      } else {
+        navigate("/home");
+      }
     } catch (error) {
-      alert("Login gagal. Silakan cek email dan password Anda.");
+      alert("Login gagal. Silakan cek email/NIM dan password Anda.");
     } finally {
       setIsLoading(false);
     }
@@ -28,11 +39,11 @@ export default function LoginPage() {
     <div className="w-screen h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl">
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-center">
-        <img
-          src={logo}
-          alt="logo"
-          className="mx-auto w-20 h-20 object-contain drop-shadow-md bg-white rounded-full p-1"
-        />
+          <img
+            src={logo}
+            alt="logo"
+            className="mx-auto w-20 h-20 object-contain drop-shadow-md bg-white rounded-full p-1"
+          />
         </div>
 
         <div className="p-6">
@@ -43,15 +54,15 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-800 mb-1">
+              <label htmlFor="identifier" className="block text-sm font-medium text-gray-800 mb-1">
                 Email/NIM
               </label>
               <input
-                id="email"
+                id="identifier"
                 type="text"
-                placeholder="example@gmail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email atau NIM"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 required
                 className="w-full px-4 py-3 border text-gray-900 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />

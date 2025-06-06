@@ -1,7 +1,7 @@
 import React from "react";
-import SidebarMenu from "../components/Sidebar";
+import SidebarMenu from "../../components/Sidebar";
 import { motion } from "framer-motion";
-import { BarChart, PieChart } from "../components/Charts"; // Anda perlu membuat komponen chart ini
+import AdminSidebar from "../../components/AdminSidebar";
 
 export default function AdminHomePage() {
   // Data statistik
@@ -58,7 +58,7 @@ export default function AdminHomePage() {
 
   return (
     <div className="flex min-h-screen min-w-screen bg-gray-50">
-      <SidebarMenu isAdmin={true} />
+      <AdminSidebar />
       <main className="flex-1 p-6">
         <motion.h1 
           className="text-3xl font-bold text-blue-900 mb-8"
@@ -106,9 +106,6 @@ export default function AdminHomePage() {
             transition={{ delay: 0.4 }}
           >
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Aktivitas Asisten</h3>
-            <div className="h-64">
-              <BarChart />
-            </div>
           </motion.div>
 
           {/* Tugas Prioritas */}
@@ -180,9 +177,6 @@ export default function AdminHomePage() {
             transition={{ delay: 0.7 }}
           >
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Distribusi Asisten</h3>
-            <div className="h-64">
-              <PieChart />
-            </div>
           </motion.div>
         </section>
 

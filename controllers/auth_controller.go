@@ -1,19 +1,20 @@
 package controllers
 
 import (
-	"fmt"
 	"forum_asisten/config"
 	"forum_asisten/models"
 	"forum_asisten/utils"
 	"net/http"
+	"regexp"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
-type LoginInput struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
+// type LoginInput struct {
+// 	Email    string `json:"email"`
+// 	Password string `json:"password"`
+// }
 
 type RegisterInput struct {
 	Nama     string  `json:"nama" binding:"required"`
@@ -61,32 +62,57 @@ func Register(c *gin.Context) {
 
 
 func Login(c *gin.Context) {
-	var input LoginInput
+	var input struct {
+		Identifier string `json:"identifier" binding:"required"`
+		Password   string `json:"password" binding:"required"`
+	}
+
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Format input salah"})
 		return
 	}
 
 	var user models.User
-	if err := config.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Email tidak ditemukan"})
+
+	// Simple check apakah identifier itu email dengan regex
+	isEmail := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`).MatchString(input.Identifier)
+
+	var err error
+	if isEmail {
+		err = config.DB.Where("email = ?", strings.ToLower(input.Identifier)).First(&user).Error
+	} else {
+		err = config.DB.Where("nim = ?", input.Identifier).First(&user).Error
+	}
+
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Email atau NIM tidak ditemukan"})
 		return
 	}
 
 	if !utils.CheckPasswordHash(input.Password, user.Password) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Password salah"})
-		fmt.Println("Password input:", input.Password)
-fmt.Println("Password stored:", user.Password)
 		return
 	}
 
-	token, err := utils.GenerateJWT(user.ID, user.Email ,user.Nama, *user.NIM, user.Role)
-if err != nil {
-	c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal generate token"})
-	return
-}
+	nim := ""
+	if user.NIM != nil {
+		nim = *user.NIM
+	}
 
+	token, err := utils.GenerateJWT(user.ID, user.Email, user.Nama, nim, user.Role)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal generate token"})
+		return
+	}
 
-
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.JSON(http.StatusOK, gin.H{
+		"token": token,
+		"user": gin.H{
+			"id":    user.ID,
+			"nama":  user.Nama,
+			"email": user.Email,
+			"nim":   user.NIM,
+			"role":  user.Role,
+		},
+	})
 }

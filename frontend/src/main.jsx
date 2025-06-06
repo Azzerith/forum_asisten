@@ -10,6 +10,10 @@ import ProfilePage from './pages/ProfilePage'
 import JadwalAsistenPage from './pages/JadwalAsistenPage'
 import RekapitulasiPage from './pages/RekapitulasiPage'
 import PresensiPage from './pages/PresensiPage'
+import AdminHomePage from './pages/admin/AdminHomePage'
+import DataDosen from './pages/admin/DataDosen'
+import DataProdi from './pages/admin/DataProdi'
+import DataUser from './pages/admin/DataUser'
 
 const router = createBrowserRouter([
   { path: '/', element: <LoginPage /> },
@@ -20,6 +24,10 @@ const router = createBrowserRouter([
   { path: '/presensi', element: <PresensiPage /> },
   {path:'/rekapitulasi',element:<RekapitulasiPage/>},
   { path: '/mata-kuliah/:programStudi', element: <MataKuliahDetailPage /> },
+
+  {path:'/admin/home', element:<AdminHomePage/>},
+  {path:'/admin/data-dosen', element:<DataDosen/>},
+  {path:'/admin/data-prodi',element:<DataProdi/>}
 ])
 
 ReactDOM.createRoot(document.getElementById('root')).render(
