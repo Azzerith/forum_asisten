@@ -5,7 +5,6 @@ import './index.css'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import MataKuliahPage from './pages/MataKuliahPage'
-import MataKuliahDetailPage from './pages/MataKuliahDetailPage'
 import ProfilePage from './pages/ProfilePage'
 import JadwalAsistenPage from './pages/JadwalAsistenPage'
 import RekapitulasiPage from './pages/RekapitulasiPage'
@@ -23,11 +22,11 @@ const router = createBrowserRouter([
   { path: '/mata-kuliah', element: <MataKuliahPage /> },
   { path: '/presensi', element: <PresensiPage /> },
   {path:'/rekapitulasi',element:<RekapitulasiPage/>},
-  { path: '/mata-kuliah/:programStudi', element: <MataKuliahDetailPage /> },
 
   {path:'/admin/home', element:<AdminHomePage/>},
   {path:'/admin/data-dosen', element:<DataDosen/>},
-  {path:'/admin/data-prodi',element:<DataProdi/>}
+  {path:'/admin/data-prodi',element:<DataProdi/>},
+  {path:'/admin/data-user',element:<DataUser/>}
 ])
 
 ReactDOM.createRoot(document.getElementById('root')).render(
