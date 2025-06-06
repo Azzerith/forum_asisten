@@ -10,7 +10,7 @@ import (
 func SetupRoutes(r *gin.Engine) {
 	api := r.Group("/api")
 	{
-		api.POST("/register", controllers.Register)
+		// api.POST("/register", controllers.Register)
 		api.POST("/login", controllers.Login)
 		// api.GET("/program-studi", controllers.GetAllProgramStudi)
 		// api.GET("/mata-kuliah", controllers.GetAllMataKuliah)
@@ -41,6 +41,12 @@ func SetupRoutes(r *gin.Engine) {
 		admin := api.Group("/admin")
 		admin.Use(middlewares.AuthMiddleware(), middlewares.AdminMiddleware())
 		{
+			admin.POST("/users", controllers.Register)
+			admin.GET("/users", controllers.GetUsers)
+			admin.PUT("/users/:id", controllers.UpdateUser)
+			admin.PUT("/users/:id/status", controllers.UpdateUserStatus)
+			admin.DELETE("/users/:id", controllers.DeleteUser)
+
 			admin.GET("/program-studi", controllers.GetAllProgramStudi)
 			admin.POST("/program-studi", controllers.CreateProgramStudi)
 			admin.PUT("/program-studi/:id", controllers.UpdateProgramStudi)

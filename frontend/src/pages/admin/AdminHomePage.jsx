@@ -74,7 +74,7 @@ export default function AdminHomePage() {
           {stats.map((stat, index) => (
             <motion.div
               key={index}
-              className="bg-white p-6 rounded-xl shadow hover:shadow-md transition-shadow"
+              className="text-black bg-white p-6 rounded-xl shadow hover:shadow-md transition-shadow"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1, duration: 0.3 }}
@@ -120,7 +120,7 @@ export default function AdminHomePage() {
               {urgentTasks.map((task, index) => (
                 <div 
                   key={index} 
-                  className={`p-4 rounded-lg border-l-4 ${
+                  className={`text-black p-4 rounded-lg border-l-4 ${
                     task.priority === "high" ? "border-red-500 bg-red-50" :
                     task.priority === "medium" ? "border-yellow-500 bg-yellow-50" :
                     "border-blue-500 bg-blue-50"
@@ -128,7 +128,7 @@ export default function AdminHomePage() {
                 >
                   <h4 className="font-medium">{task.title}</h4>
                   <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                  <button className="mt-2 text-xs bg-white hover:bg-gray-100 px-3 py-1 rounded-full transition-colors shadow">
+                  <button className="text-white mt-2 text-xs bg-white hover:bg-gray-100 px-3 py-1 rounded-full transition-colors shadow">
                     Tindak Lanjut
                   </button>
                 </div>

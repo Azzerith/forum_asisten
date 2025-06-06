@@ -11,11 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// type LoginInput struct {
-// 	Email    string `json:"email"`
-// 	Password string `json:"password"`
-// }
-
 type RegisterInput struct {
 	Nama     string  `json:"nama" binding:"required"`
 	Email    string  `json:"email" binding:"required,email"`
@@ -42,13 +37,13 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// Buat objek User dari input
 	user := models.User{
 		Nama:     input.Nama,
 		Email:    input.Email,
 		Password: hashedPassword,
 		Role:     input.Role,
 		NIM:      input.NIM,
+		Status:   "aktif",
 	}
 
 	if err := config.DB.Create(&user).Error; err != nil {
@@ -58,8 +53,6 @@ func Register(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "User berhasil dibuat"})
 }
-
-
 
 func Login(c *gin.Context) {
 	var input struct {
@@ -73,8 +66,6 @@ func Login(c *gin.Context) {
 	}
 
 	var user models.User
-
-	// Simple check apakah identifier itu email dengan regex
 	isEmail := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`).MatchString(input.Identifier)
 
 	var err error
@@ -98,7 +89,6 @@ func Login(c *gin.Context) {
 	if user.NIM != nil {
 		nim = *user.NIM
 	}
-
 	token, err := utils.GenerateJWT(user.ID, user.Email, user.Nama, nim, user.Role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal generate token"})
@@ -108,11 +98,89 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"token": token,
 		"user": gin.H{
-			"id":    user.ID,
-			"nama":  user.Nama,
-			"email": user.Email,
-			"nim":   user.NIM,
-			"role":  user.Role,
+			"id":     user.ID,
+			"nama":   user.Nama,
+			"email":  user.Email,
+			"nim":    user.NIM,
+			"role":   user.Role,
+			"status": user.Status,
+			"photo":  user.Photo,
 		},
 	})
+}
+
+func GetUsers(c *gin.Context) {
+	var users []models.User
+	if err := config.DB.Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data user"})
+		return
+	}
+	c.JSON(http.StatusOK, users)
+}
+
+func UpdateUser(c *gin.Context) {
+	id := c.Param("id")
+	var input models.User
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
+		return
+	}
+
+	var user models.User
+	if err := config.DB.First(&user, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
+		return
+	}
+
+	if err := config.DB.Model(&user).Updates(input).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User berhasil diperbarui"})
+}
+
+// Tambahkan endpoint khusus untuk update status
+func UpdateUserStatus(c *gin.Context) {
+    id := c.Param("id")
+    
+    // Struct khusus untuk menerima input status
+    var input struct {
+        Status string `json:"status" binding:"required,oneof=aktif non-aktif"`
+    }
+    
+    if err := c.ShouldBindJSON(&input); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Status harus diisi dengan 'aktif' atau 'non-aktif'"})
+        return
+    }
+    
+    var user models.User
+    if err := config.DB.First(&user, id).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
+        return
+    }
+    
+    // Normalisasi status ke lowercase
+    normalizedStatus := strings.ToLower(input.Status)
+    
+    // Update hanya field status
+    if err := config.DB.Model(&user).Update("status", normalizedStatus).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui status user"})
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "message": "Status user berhasil diperbarui",
+        "status":  normalizedStatus,
+    })
+}
+
+func DeleteUser(c *gin.Context) {
+	id := c.Param("id")
+	if err := config.DB.Delete(&models.User{}, id).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghapus user"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "User berhasil dihapus"})
 }
