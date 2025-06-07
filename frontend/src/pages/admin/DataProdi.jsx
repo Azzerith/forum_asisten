@@ -1,219 +1,352 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import AdminSidebar from "../../components/AdminSidebar";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiLoader, FiSearch } from "react-icons/fi";
 
 export default function DataProdi() {
-  const [prodi, setProdi] = useState([
-    { id: 1, kode: "IF", nama: "Informatika", fakultas: "FTI", jenjang: "S1", akreditasi: "A" },
-    { id: 2, kode: "SI", nama: "Sistem Informasi", fakultas: "FTI", jenjang: "S1", akreditasi: "A" },
-    { id: 3, kode: "TK", nama: "Teknik Komputer", fakultas: "FTI", jenjang: "S1", akreditasi: "B" }
-  ]);
+  const [Prodi, setProdi] = useState([]);
+  const [filteredProdi, setFilteredProdi] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [editProdiId, setEditProdiId] = useState(null);
+  const [formData, setFormData] = useState({ nama: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    kode: "",
-    nama: "",
-    fakultas: "",
-    jenjang: "",
-    akreditasi: ""
+  const token = localStorage.getItem("token");
+
+  const getAuthHeaders = () => ({
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
   });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+  useEffect(() => {
+    const fetchProdi = async () => {
+      if (!token) return;
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await axios.get("http://localhost:8080/api/admin/program-studi", {
+          headers: getAuthHeaders(),
+        });
+        setProdi(response.data || []);
+        setFilteredProdi(response.data || []);
+      } catch (err) {
+        setError(err.response?.data?.message || err.message || "Gagal mengambil data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProdi();
+  }, [token]);
+
+  // Filter Prodi based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredProdi(Prodi);
+    } else {
+      const filtered = Prodi.filter(d =>
+        d.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        d.id.toString().includes(searchTerm)
+      );
+      setFilteredProdi(filtered);
+    }
+  }, [searchTerm, Prodi]);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Yakin ingin menghapus data Program Studi ini?")) return;
+    try {
+      setSubmitting(true);
+      await axios.delete(`http://localhost:8080/api/admin/program-studi/${id}`, {
+        headers: getAuthHeaders(),
+      });
+      const updatedProdi = Prodi.filter((d) => d.id !== id);
+      setProdi(updatedProdi);
+      setFilteredProdi(updatedProdi);
+      showSuccess("Program Studi berhasil dihapus");
+    } catch (err) {
+      showError(`Gagal menghapus Program Studi: ${err.response?.data?.message || err.message}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleSubmit = (e) => {
+  const startEdit = (d) => {
+    setEditProdiId(d.id);
+    setFormData({ nama: d.nama || "" });
+  };
+
+  const cancelEdit = () => {
+    setEditProdiId(null);
+    setFormData({ nama: "" });
+  };
+
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
-    const newProdi = {
-      id: prodi.length + 1,
-      ...formData
-    };
-    setProdi([...prodi, newProdi]);
-    setIsModalOpen(false);
-    setFormData({
-      kode: "",
-      nama: "",
-      fakultas: "",
-      jenjang: "",
-      akreditasi: ""
-    });
+    if (!formData.nama.trim()) {
+      showError("Nama Program Studi harus diisi");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      await axios.put(`http://localhost:8080/api/admin/program-studi/${editProdiId}`, formData, {
+        headers: getAuthHeaders(),
+      });
+      const updatedProdi = Prodi.map((d) => (d.id === editProdiId ? { ...d, ...formData } : d));
+      setProdi(updatedProdi);
+      setFilteredProdi(updatedProdi);
+      cancelEdit();
+      showSuccess("Prodi berhasil diupdate");
+    } catch (err) {
+      showError(`Gagal mengupdate Prodi: ${err.response?.data?.message || err.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleAddProdi = async () => {
+    if (!formData.nama.trim()) {
+      showError("Nama Program Studi harus diisi");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const response = await axios.post("http://localhost:8080/api/admin/program-studi", formData, {
+        headers: getAuthHeaders(),
+      });
+      const updatedProdi = [...Prodi, response.data];
+      setProdi(updatedProdi);
+      setFilteredProdi(updatedProdi);
+      setFormData({ nama: "" });
+      showSuccess("Program Studi berhasil ditambahkan");
+    } catch (err) {
+      showError(`Gagal menambah Program Studi: ${err.response?.data?.message || err.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const showSuccess = (message) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(null), 3000);
+  };
+
+  const showError = (message) => {
+    setError(message);
+    setTimeout(() => setError(null), 5000);
   };
 
   return (
     <div className="flex min-h-screen min-w-screen bg-gray-50">
-      <AdminSidebar />
-      <main className="flex-1 p-6">
-        <motion.h1 
-          className="text-3xl font-bold text-blue-900 mb-8"
+      {/* Fixed Sidebar */}
+        <AdminSidebar />
+
+      {/* Main Content with padding to account for fixed sidebar */}
+      <main className="flex-1 p-6 overflow-auto">
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
+          className="max-w-4xl mx-auto"
         >
-          Data Program Studi
-        </motion.h1>
-        
-        <motion.div 
-          className="bg-white p-6 rounded-xl shadow"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">Daftar Program Studi</h2>
-            <button 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-              onClick={() => setIsModalOpen(true)}
-            >
-              Tambah Prodi
-            </button>
-          </div>
+          <h1 className="text-3xl font-bold text-blue-900 mb-6">Data Program Studi</h1>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Prodi</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fakultas</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenjang</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Akreditasi</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {prodi.map((prd) => (
-                  <tr key={prd.id}>
-                    <td className="px-6 py-4 whitespace-nowrap font-medium">{prd.kode}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{prd.nama}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{prd.fakultas}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{prd.jenjang}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        prd.akreditasi === "A" ? "bg-green-100 text-green-800" :
-                        prd.akreditasi === "B" ? "bg-blue-100 text-blue-800" :
-                        "bg-yellow-100 text-yellow-800"
-                      }`}>
-                        {prd.akreditasi}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button className="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
-                      <button className="text-red-600 hover:text-red-900">Hapus</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </motion.div>
+          {/* Notification Messages */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mb-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded"
+              >
+                <p>{error}</p>
+              </motion.div>
+            )}
+            {successMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mb-4 p-4 bg-green-100 border-l-4 border-green-500 text-green-700 rounded"
+              >
+                <p>{successMessage}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Modal Tambah Prodi */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <motion.div 
-              className="bg-white rounded-lg p-6 w-full max-w-md"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
+          {/* Form Section */}
+          <motion.div
+            className="bg-white p-6 rounded-xl shadow-md mb-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+              {editProdiId ? "Edit Program Studi" : "Tambah Program Studi Baru"}
+            </h2>
+
+            <form
+              onSubmit={editProdiId ? handleEditSubmit : (e) => {
+                e.preventDefault();
+                handleAddProdi();
+              }}
+              className="space-y-4"
             >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Tambah Program Studi</h3>
-                <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-gray-700">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+              <div>
+                <label htmlFor="nama" className="block text-sm font-medium text-gray-700 mb-1">
+                  Nama Program Studi
+                </label>
+                <input
+                  id="nama"
+                  type="text"
+                  placeholder="Masukkan nama Prodi"
+                  className="text-black w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                  value={formData.nama}
+                  onChange={(e) => setFormData({ nama: e.target.value })}
+                  disabled={submitting}
+                  required
+                />
               </div>
-              <form onSubmit={handleSubmit}>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Kode Prodi</label>
-                    <input
-                      type="text"
-                      name="kode"
-                      value={formData.kode}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Prodi</label>
-                    <input
-                      type="text"
-                      name="nama"
-                      value={formData.nama}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fakultas</label>
-                    <input
-                      type="text"
-                      name="fakultas"
-                      value={formData.fakultas}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Jenjang</label>
-                    <select
-                      name="jenjang"
-                      value={formData.jenjang}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Pilih Jenjang</option>
-                      <option value="D3">D3</option>
-                      <option value="S1">S1</option>
-                      <option value="S2">S2</option>
-                      <option value="S3">S3</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Akreditasi</label>
-                    <select
-                      name="akreditasi"
-                      value={formData.akreditasi}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Pilih Akreditasi</option>
-                      <option value="A">A</option>
-                      <option value="B">B</option>
-                      <option value="C">C</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="mt-6 flex justify-end space-x-3">
+              
+              <div className="flex space-x-3">
+                <button
+                  type="submit"
+                  className={`flex items-center justify-center px-5 py-2.5 rounded-lg ${
+                    editProdiId 
+                      ? "bg-indigo-600 hover:bg-indigo-700" 
+                      : "bg-blue-600 hover:bg-blue-700"
+                  } text-white transition-colors ${
+                    submitting ? "opacity-70 cursor-not-allowed" : ""
+                  }`}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <FiLoader className="animate-spin mr-2" />
+                  ) : editProdiId ? (
+                    <>
+                      <FiCheck className="mr-2" />
+                      Simpan Perubahan
+                    </>
+                  ) : (
+                    <>
+                      <FiPlus className="mr-2" />
+                      Tambah Program Studi
+                    </>
+                  )}
+                </button>
+                
+                {editProdiId && (
                   <button
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100"
+                    onClick={cancelEdit}
+                    className="flex items-center justify-center px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-white rounded-lg transition-colors"
+                    disabled={submitting}
                   >
+                    <FiX className="mr-2" />
                     Batal
                   </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                  >
-                    Simpan
-                  </button>
+                )}
+              </div>
+            </form>
+          </motion.div>
+
+          {/* Prodi List */}
+          <motion.div
+            className="bg-white p-6 rounded-xl shadow-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+              <h2 className="text-xl font-semibold text-gray-800">Daftar Prodi</h2>
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <span className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full whitespace-nowrap">
+                  {filteredProdi.length} Program Studi
+                </span>
+                <div className="relative w-full sm:w-64">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiSearch className="text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Cari Prodi..."
+                    className=" text-black block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : filteredProdi.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-gray-400 mb-2">
+                  <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                  </svg>
+                </div>
+                <p className="text-gray-500">
+                  {searchTerm ? "Tidak ditemukan Prodi yang sesuai" : "Belum ada data Prodi."}
+                </p>
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  >
+                    Reset pencarian
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-200">
+                <AnimatePresence>
+                  {filteredProdi.map((d) => (
+                    <motion.div
+                      key={d.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="text-black py-4 flex justify-between items-center hover:bg-gray-50 px-3 rounded-lg transition-colors"
+                    >
+                      <div>
+                        <h3 className="font-medium text-gray-800">{d.nama || "-"}</h3>
+                        <p className="text-sm text-gray-500">ID: {d.id}</p>
+                      </div>
+                      
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => startEdit(d)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                          title="Edit"
+                          disabled={submitting}
+                        >
+                          <FiEdit2 size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(d.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                          title="Hapus"
+                          disabled={submitting}
+                        >
+                          <FiTrash2 size={18} />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </motion.div>
+        </motion.div>
       </main>
     </div>
   );

@@ -152,7 +152,7 @@ export default function DataDosen() {
           transition={{ duration: 0.4 }}
           className="max-w-4xl mx-auto"
         >
-          <h1 className="text-3xl font-bold text-gray-800 mb-6">Data Dosen</h1>
+          <h1 className="text-3xl font-bold text-blue-900 mb-6">Data Dosen</h1>
 
           {/* Notification Messages */}
           <AnimatePresence>
