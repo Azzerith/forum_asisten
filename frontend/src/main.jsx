@@ -13,6 +13,7 @@ import AdminHomePage from './pages/admin/AdminHomePage'
 import DataDosen from './pages/admin/DataDosen'
 import DataProdi from './pages/admin/DataProdi'
 import DataUser from './pages/admin/DataUser'
+import DataMataKuliah from './pages/admin/DataMataKuliah'
 
 const router = createBrowserRouter([
   { path: '/', element: <LoginPage /> },
@@ -26,7 +27,8 @@ const router = createBrowserRouter([
   {path:'/admin/home', element:<AdminHomePage/>},
   {path:'/admin/data-dosen', element:<DataDosen/>},
   {path:'/admin/data-prodi',element:<DataProdi/>},
-  {path:'/admin/data-user',element:<DataUser/>}
+  {path:'/admin/data-user',element:<DataUser/>},
+  {path:'/admin/data-matkul',element:<DataMataKuliah/>}
 ])
 
 ReactDOM.createRoot(document.getElementById('root')).render(
