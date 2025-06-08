@@ -62,6 +62,7 @@ func SetupRoutes(r *gin.Engine) {
 			admin.PUT("/dosen/:id", controllers.UpdateDosen)
 			admin.DELETE("/dosen/:id", controllers.DeleteDosen)
 
+			admin.GET("/jadwal", controllers.GetAllJadwal)
 			admin.POST("/jadwal", controllers.CreateJadwal)
 			admin.PUT("/jadwal/:id", controllers.UpdateJadwal)
 			admin.DELETE("/jadwal/:id", controllers.DeleteJadwal)
