@@ -4,6 +4,7 @@ import SidebarMenu from "../components/Sidebar";
 import { FiCheckCircle, FiPaperclip } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+// import { Cloudinary } from "@cloudinary/url-gen";
 
 export default function PresensiPage() {
   const [jadwal, setJadwal] = useState(null);
@@ -16,6 +17,13 @@ const [fileKehadiran, setFileKehadiran] = useState(null);
 const [fileIzin, setFileIzin] = useState(null);
 const [isiMateri, setIsiMateri] = useState("");
 const [jadwalDipilih, setJadwalDipilih] = useState(false);
+const [showForm, setShowForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+// const cld = new Cloudinary({
+//   cloud: {
+//     cloudName: 'azzerith',
+//   }
+// });
 
   // Ambil user dari token
   useEffect(() => {
@@ -61,16 +69,112 @@ const [jadwalDipilih, setJadwalDipilih] = useState(false);
     );
   };
 
-  const handleSubmit = async () => {
+  const uploadToCloudinary = async (file) => {
+    if (!file) {
+      throw new Error('No file provided');
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'ml_default');
+    
     try {
-      // Implementasi submit presensi
-      console.log("Submitting presensi...");
-      // ... logika submit
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/azzerith/image/upload`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          onUploadProgress: (progressEvent) => {
+            const progress = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            console.log(`Upload progress: ${progress}%`);
+          },
+        }
+      );
+      if (!response.data.secure_url) {
+        throw new Error('No URL returned from Cloudinary');
+      }
+      if (!file.type.match('image.*')) {
+        throw new Error('Hanya file gambar yang diperbolehkan');
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        throw new Error('Ukuran file terlalu besar (maksimal 5MB)');
+      }
+      return response.data.secure_url;
+    } catch (error) {
+      console.error('Detailed Cloudinary error:', {
+        error: error.response?.data?.error || error.message,
+      config: error.config,});
+      throw new Error('Gagal mengupload gambar: ' + 
+        (error.response?.data?.error?.message || error.message));
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!jadwal) return;
+    
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      let buktiKehadiranUrl = null;
+      let buktiIzinUrl = null;
+
+      // Upload gambar ke Cloudinary sesuai status
+      if (status === "hadir") {
+        if (!fileKehadiran) {
+          throw new Error("Bukti kehadiran diperlukan");
+        }
+        buktiKehadiranUrl = await uploadToCloudinary(fileKehadiran);
+      } else if (status === "izin") {
+        if (!fileIzin) {
+          throw new Error("Bukti izin diperlukan");
+        }
+        buktiIzinUrl = await uploadToCloudinary(fileIzin);
+      }
+
+      // Kirim data ke backend
+      const presensiData = {
+        jadwal_id: jadwal.jadwal?.id || jadwal.id,
+        jenis: "utama",
+        status: status,
+        ...(status === "hadir" && {
+          bukti_kehadiran: buktiKehadiranUrl,
+          isi_materi: isiMateri
+        }),
+        ...(status === "izin" && {
+          bukti_izin: buktiIzinUrl
+        })
+      };
+
+      const response = await axios.post(
+        "http://localhost:8080/api/presensi",
+        presensiData,
+        {
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      
+      console.log("Presensi berhasil:", response.data);
+      alert("Presensi berhasil dikirim!");
+      setShowForm(false);
+      // Reset form
+      setFileKehadiran(null);
+      setFileIzin(null);
+      setIsiMateri("");
     } catch (error) {
       console.error("Gagal submit presensi:", error);
       setError(error.response?.data?.error || error.message || "Gagal submit presensi");
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
 
   // Ambil data presensi/jadwal asisten
   useEffect(() => {
@@ -199,7 +303,7 @@ const [jadwalDipilih, setJadwalDipilih] = useState(false);
 
         {/* Jadwal */}
         <motion.div
-          onClick={() => setJadwalDipilih(true)}
+          onClick={() => setShowForm(!showForm)}
           className="cursor-pointer bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-6 mb-6 shadow-lg hover:scale-[1.01] transition-transform"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -208,26 +312,35 @@ const [jadwalDipilih, setJadwalDipilih] = useState(false);
           <div className="flex items-center gap-4 mb-2">
             <span className="text-3xl">⏰</span>
             <h2 className="text-xl font-semibold">
-            {jadwal.jadwal?.mata_kuliah?.nama} - {jadwal.jadwal?.kelas}
+              {jadwal.jadwal?.mata_kuliah?.nama} - {jadwal.jadwal?.kelas}
             </h2>
           </div>
           <p className="text-sm opacity-90 mb-1">
-              Dosen: {jadwal.jadwal?.dosen?.nama}
-            </p>
+            Dosen: {jadwal.jadwal?.dosen?.nama}
+          </p>
           <p className="text-sm opacity-90">
-          Jadwal: {jadwal.jadwal?.hari }, {jadwal.jadwal?.jam_mulai} - {jadwal.jadwal?.jam_selesai} , 
-              {jadwal.jadwal?.lab}
-            </p>
+            Jadwal: {jadwal.jadwal?.hari}, {jadwal.jadwal?.jam_mulai} - {jadwal.jadwal?.jam_selesai}, 
+            {jadwal.jadwal?.lab}
+          </p>
+          <div className="mt-3 text-sm">
+            {showForm ? "▲ Tutup form presensi" : "▼ Klik untuk presensi"}
+          </div>
         </motion.div>
 
         {/* Form Presensi */}
-        {jadwalDipilih && jadwal &&(
+        {showForm && (
           <motion.div
             className="bg-white p-6 rounded-xl shadow mb-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+                {error}
+              </div>
+            )}
+            
             <div className="mb-4">
               <label className="block font-medium mb-2 text-gray-700">Status</label>
               <select
@@ -241,82 +354,113 @@ const [jadwalDipilih, setJadwalDipilih] = useState(false);
             </div>
 
             {status === "hadir" && (
-  <>
-    <div className="mb-4">
-      <div className="mb-4">
-        <label className="block font-medium mb-2 text-gray-700">Upload Bukti Kehadiran (Foto tanggal di komputer dosen)</label>
-        <div className="flex items-center gap-4">
-          <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-all">
-          <FiPaperclip className="mr-2" />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setFileKehadiran(e.target.files[0])}
-              className="hidden"
-            />
-          </label>
-          {fileKehadiran && (
-            <img
-              src={URL.createObjectURL(fileKehadiran)}
-              alt="Preview Kehadiran"
-              className="w-20 h-20 object-cover rounded border"
-            />
-          )}
-        </div>
-      </div>
-    </div>
+              <>
+                <div className="mb-4">
+                  <label className="block font-medium mb-2 text-gray-700">
+                    Upload Bukti Kehadiran (Foto tanggal di komputer dosen)
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-all">
+                      <FiPaperclip className="mr-2" />
+                      Pilih File
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setFileKehadiran(e.target.files[0])}
+                        className="hidden"
+                        required
+                      />
+                    </label>
+                    {fileKehadiran && (
+                      <div className="relative">
+                        <img
+                          src={URL.createObjectURL(fileKehadiran)}
+                          alt="Preview Kehadiran"
+                          className="w-20 h-20 object-cover rounded border"
+                        />
+                        <button
+                          onClick={() => setFileKehadiran(null)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-    <div className="mb-4">
-      <label className="block font-medium mb-2 text-gray-700">Isi Materi</label>
-      <textarea
-        value={isiMateri}
-        onChange={(e) => setIsiMateri(e.target.value)}
-        className="text-black w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-        rows="4"
-      ></textarea>
-    </div>
-  </>
-)}
+                <div className="mb-4">
+                  <label className="block font-medium mb-2 text-gray-700">Isi Materi</label>
+                  <textarea
+                    value={isiMateri}
+                    onChange={(e) => setIsiMateri(e.target.value)}
+                    className="text-black w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    rows="4"
+                    placeholder="Masukkan materi yang diajarkan..."
+                    required
+                  ></textarea>
+                </div>
+              </>
+            )}
 
-{status === "izin" && (
-  <div className="mb-4">
-    <div className="mb-4">
-  <label className="block font-medium mb-2 text-gray-700">Upload Bukti Izin</label>
-  <div className="flex items-center gap-4">
-    <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition-all">
-      📤 Pilih Gambar
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => setFileIzin(e.target.files[0])}
-        className="hidden"
-      />
-    </label>
-    {fileIzin && (
-      <img
-        src={URL.createObjectURL(fileIzin)}
-        alt="Preview Izin"
-        className="w-20 h-20 object-cover rounded border"
-      />
-    )}
-  </div>
-</div>
-
-  </div>
-)}
-
+            {status === "izin" && (
+              <div className="mb-4">
+                <label className="block font-medium mb-2 text-gray-700">Upload Bukti Izin</label>
+                <div className="flex items-center gap-4">
+                  <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition-all">
+                    <FiPaperclip className="mr-2" />
+                    Pilih File
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setFileIzin(e.target.files[0])}
+                      className="hidden"
+                      required
+                    />
+                  </label>
+                  {fileIzin && (
+                    <div className="relative">
+                      <img
+                        src={URL.createObjectURL(fileIzin)}
+                        alt="Preview Izin"
+                        className="w-20 h-20 object-cover rounded border"
+                      />
+                      <button
+                        onClick={() => setFileIzin(null)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <motion.button
               onClick={handleSubmit}
+              disabled={isSubmitting}
               className={`w-full py-3 px-4 rounded-lg text-white font-medium text-lg ${
                 status === "izin"
                   ? "bg-gradient-to-r from-red-600 to-red-700"
                   : "bg-gradient-to-r from-blue-600 to-blue-700"
-              } shadow-md`}
+              } shadow-md disabled:opacity-70`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              {status === "izin" ? "Ajukan Izin" : "Submit Presensi"}
+              {isSubmitting ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Memproses...
+                </span>
+              ) : status === "izin" ? (
+                "Ajukan Izin"
+              ) : (
+                "Submit Presensi"
+              )}
             </motion.button>
           </motion.div>
         )}
