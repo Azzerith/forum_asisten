@@ -11,6 +11,11 @@ export default function PresensiPage() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [status, setStatus] = useState("hadir");
+const [fileKehadiran, setFileKehadiran] = useState(null);
+const [fileIzin, setFileIzin] = useState(null);
+const [isiMateri, setIsiMateri] = useState("");
+const [jadwalDipilih, setJadwalDipilih] = useState(false);
 
   // Ambil user dari token
   useEffect(() => {
@@ -33,7 +38,38 @@ export default function PresensiPage() {
   const isTodaySchedule = (jadwalItem) => {
     const today = new Date();
     const hari = today.toLocaleDateString("id-ID", { weekday: "long" });
-    return jadwalItem.jadwal?.hari === hari;
+    const currentHour = today.getHours();
+    const currentMinute = today.getMinutes();
+    
+    // Pastikan struktur data sesuai dengan respons API
+    const jadwalHari = jadwalItem.jadwal?.hari || jadwalItem.hari;
+    const jamMulai = jadwalItem.jadwal?.jam_mulai || jadwalItem.jam_mulai;
+    const jamSelesai = jadwalItem.jadwal?.jam_selesai || jadwalItem.jam_selesai;
+    
+    // Konversi jam ke menit untuk perbandingan
+    const [mulaiHour, mulaiMinute] = jamMulai.split(':').map(Number);
+    const [selesaiHour, selesaiMinute] = jamSelesai.split(':').map(Number);
+    
+    const totalCurrent = currentHour * 60 + currentMinute;
+    const totalMulai = mulaiHour * 60 + mulaiMinute;
+    const totalSelesai = selesaiHour * 60 + selesaiMinute;
+    
+    return (
+      jadwalHari.toLowerCase() === hari.toLowerCase() &&
+      totalCurrent >= totalMulai - 30 && // 30 menit sebelum jadwal
+      totalCurrent <= totalSelesai + 30   // 30 menit setelah jadwal
+    );
+  };
+
+  const handleSubmit = async () => {
+    try {
+      // Implementasi submit presensi
+      console.log("Submitting presensi...");
+      // ... logika submit
+    } catch (error) {
+      console.error("Gagal submit presensi:", error);
+      setError(error.response?.data?.error || error.message || "Gagal submit presensi");
+    }
   };
 
   // Ambil data presensi/jadwal asisten
@@ -44,21 +80,31 @@ export default function PresensiPage() {
       try {
         setLoading(true);
         setError(null);
-
+    
         const res = await axios.get("http://localhost:8080/api/asisten-kelas", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
-
+    
         const allJadwal = Array.isArray(res.data) ? res.data : [res.data];
         console.log("All jadwal:", allJadwal);
-
-        const userJadwal = allJadwal.filter((item) => item.asisten_id === Number(user.user_id));
+    
+        const userJadwal = allJadwal.filter((item) => 
+          item.asisten_id === Number(user.user_id) || 
+          item.asisten?.id === Number(user.user_id)
+        );
+        
         const currentJadwal = userJadwal.find((item) => isTodaySchedule(item));
-
+    
         console.log("Filtered jadwal for today:", currentJadwal);
-        setJadwal(currentJadwal);
+        if (currentJadwal) {
+          setJadwal(currentJadwal);
+          setJadwalDipilih(true); // Otomatis pilih jadwal jika ditemukan
+        } else {
+          setJadwal(null);
+          setJadwalDipilih(false);
+        }
       } catch (err) {
         console.error("Gagal mengambil data jadwal", err);
         setError(err.response?.data?.error || err.message || "Gagal mengambil data");
@@ -162,17 +208,20 @@ export default function PresensiPage() {
           <div className="flex items-center gap-4 mb-2">
             <span className="text-3xl">⏰</span>
             <h2 className="text-xl font-semibold">
-              {jadwalInfo.mata_kuliah.nama} - {jadwalInfo.kelas}
+            {jadwal.jadwal?.mata_kuliah?.nama} - {jadwal.jadwal?.kelas}
             </h2>
           </div>
-          <p className="text-sm opacity-90 mb-1">Dosen: {jadwalInfo.dosen.nama}</p>
+          <p className="text-sm opacity-90 mb-1">
+              Dosen: {jadwal.jadwal?.dosen?.nama}
+            </p>
           <p className="text-sm opacity-90">
-            Jadwal: {jadwalInfo.hari}, {jadwalInfo.jam_mulai} - {jadwalInfo.jam_selesai} ({jadwalInfo.lab})
-          </p>
+          Jadwal: {jadwal.jadwal?.hari }, {jadwal.jadwal?.jam_mulai} - {jadwal.jadwal?.jam_selesai} , 
+              {jadwal.jadwal?.lab}
+            </p>
         </motion.div>
 
         {/* Form Presensi */}
-        {jadwalDipilih && (
+        {jadwalDipilih && jadwal &&(
           <motion.div
             className="bg-white p-6 rounded-xl shadow mb-6"
             initial={{ opacity: 0 }}
