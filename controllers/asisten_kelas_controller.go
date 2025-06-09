@@ -26,11 +26,11 @@ func PilihJadwalAsisten(c *gin.Context) {
 	}
 	userID := uint(userIDFloat)
 
-	role := c.GetString("role")
-	if role != "asisten" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Hanya asisten yang dapat memilih jadwal"})
-		return
-	}
+	// role := c.GetString("role")
+	// if role != "asisten" {
+	// 	c.JSON(http.StatusForbidden, gin.H{"error": "Hanya asisten yang dapat memilih jadwal"})
+	// 	return
+	// }
 
 	// Input dari client hanya jadwal_id
 	var input struct {
@@ -164,19 +164,30 @@ func UpdateAsistenKelas(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Berhasil diupdate", "data": data})
 }
 
-func DeleteAsistenKelas(c *gin.Context) {
-	id := c.Param("id")
-	var data models.AsistenKelas
+func DeleteAsistenFromJadwal(c *gin.Context) {
+    jadwalID := c.Param("jadwal_id")
+    asistenID := c.Param("asisten_id")
 
-	if err := config.DB.First(&data, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Data tidak ditemukan"})
-		return
-	}
+    // Convert IDs to uint
+    jadwalIDUint, err := strconv.ParseUint(jadwalID, 10, 32)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid jadwal ID"})
+        return
+    }
 
-	if err := config.DB.Delete(&data).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghapus data"})
-		return
-	}
+    asistenIDUint, err := strconv.ParseUint(asistenID, 10, 32)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid asisten ID"})
+        return
+    }
 
-	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil dihapus"})
+    // Delete the record
+    if err := config.DB.
+        Where("jadwal_id = ? AND asisten_id = ?", jadwalIDUint, asistenIDUint).
+        Delete(&models.AsistenKelas{}).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"message": "Asisten removed from jadwal"})
 }
