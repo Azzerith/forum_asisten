@@ -87,8 +87,8 @@ const [showForm, setShowForm] = useState(false);
   
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'forum_asisten'); // Pastikan ini sudah di-whitelist
-    formData.append('api_key', '455624144262999'); // Tambahkan API key
+    formData.append('upload_preset', 'forum_asisten');
+    formData.append('api_key', '455624144262999');
   
     try {
       const response = await axios.post(

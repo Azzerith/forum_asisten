@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import SidebarMenu from "../components/Sidebar";
-import { FiClock, FiCalendar, FiBook, FiUser, FiHome, FiAlertCircle } from "react-icons/fi";
+import { FiClock, FiCalendar, FiBook, FiUser, FiHome, FiAlertCircle, FiUsers } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-// import { jadwal } from "../utils/stateStore";
 
 export default function JadwalAsistenPage() {
   const [schedules, setSchedules] = useState([]);
+  const [allSchedules, setAllSchedules] = useState([]); // Menyimpan semua jadwal untuk mencari asisten lain
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
@@ -18,12 +18,11 @@ export default function JadwalAsistenPage() {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        console.log("Token payload:", payload); // Debug token content
+        console.log("Token payload:", payload);
         setUser({
           id: payload.user_id,
           ...payload
         });
-        
       } catch (err) {
         console.error("Token parsing error:", err);
         navigate("/login");
@@ -51,17 +50,15 @@ export default function JadwalAsistenPage() {
           }
         );
     
-        const allSchedules = response.data;
+        const allSchedulesData = response.data;
+        setAllSchedules(allSchedulesData);
     
-        // Debug log
-        console.log("All schedules:", allSchedules);
-        console.log("User from token:", user);
-    
-        // Pastikan user.id adalah number
-        const userSchedules = allSchedules.filter(item => item.asisten_id === Number(user.user_id));
+        // Filter jadwal untuk user yang login
+        const userSchedules = allSchedulesData.filter(
+          item => item.asisten_id === Number(user.user_id)
+        );
     
         console.log("Filtered schedules:", userSchedules);
-    
         setSchedules(userSchedules);
       } catch (err) {
         console.error("Fetch error:", err);
@@ -73,6 +70,23 @@ export default function JadwalAsistenPage() {
     
     fetchSchedules();
   }, [user?.id]);
+
+  // Fungsi untuk mendapatkan daftar asisten yang mengambil jadwal yang sama
+  const getAssistantsForSchedule = (jadwalId) => {
+    const assistants = allSchedules
+      .filter(item => item.jadwal_id === jadwalId)
+      .map(item => item.user.nama);
+    
+    // Filter out the current user if needed
+    // const otherAssistants = assistants.filter(name => name !== user?.nama);
+    
+    // Jika hanya ada 1 asisten (user sendiri), tambahkan "-"
+    if (assistants.length === 1) {
+      return [assistants[0], "-"];
+    }
+    
+    return assistants.slice(0, 2); // Ambil maksimal 2 asisten
+  };
 
   if (loading) {
     return (
@@ -144,60 +158,76 @@ export default function JadwalAsistenPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hari/Jam</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kelas/Lab</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dosen</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asisten</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {schedules.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <FiBook className="text-blue-600" />
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {item.jadwal.mata_kuliah.nama}
+                  {schedules.map((item) => {
+                    const assistants = getAssistantsForSchedule(item.jadwal_id);
+                    return (
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                              <FiBook className="text-blue-600" />
                             </div>
-                            <div className="text-sm text-gray-500">
-                              {item.jadwal.mata_kuliah.kode}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <FiCalendar className="text-gray-400 mr-2" />
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {item.jadwal.hari}
-                            </div>
-                            <div className="text-sm text-gray-500 flex items-center">
-                              <FiClock className="mr-1" />
-                              {item.jadwal.jam_mulai} - {item.jadwal.jam_selesai}
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {item.jadwal.mata_kuliah.nama}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {item.jadwal.mata_kuliah.kode}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{item.jadwal.kelas}</div>
-                        <div className="text-sm text-gray-500">{item.jadwal.lab}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <FiUser className="text-gray-400 mr-2" />
-                          <div className="text-sm text-gray-900">
-                            {item.jadwal.dosen.nama}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <FiCalendar className="text-gray-400 mr-2" />
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {item.jadwal.hari}
+                              </div>
+                              <div className="text-sm text-gray-500 flex items-center">
+                                <FiClock className="mr-1" />
+                                {item.jadwal.jam_mulai} - {item.jadwal.jam_selesai}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                          Semester {item.jadwal.semester}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{item.jadwal.kelas}</div>
+                          <div className="text-sm text-gray-500">{item.jadwal.lab}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <FiUser className="text-gray-400 mr-2" />
+                            <div className="text-sm text-gray-900">
+                              {item.jadwal.dosen.nama}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <FiUsers className="text-gray-400 mr-2" />
+                            <div>
+                              {assistants.map((name, index) => (
+                                <div key={index} className="text-sm text-gray-900">
+                                  {name}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            Semester {item.jadwal.semester}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
