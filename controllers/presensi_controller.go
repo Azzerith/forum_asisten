@@ -112,3 +112,222 @@ func GetAllPresensi(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, data)
 }
+func UpdatePresensi(c *gin.Context) {
+    // Get presensi ID from URL parameter
+    presensiID := c.Param("id")
+    if presensiID == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "ID presensi harus disertakan"})
+        return
+    }
+
+    // Get user ID from token (context)
+    userIDVal, exists := c.Get("user_id")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID tidak ditemukan"})
+        return
+    }
+
+    userIDFloat, ok := userIDVal.(float64)
+    if !ok {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID token tidak valid"})
+        return
+    }
+    userID := uint(userIDFloat)
+
+    // Check if presensi exists and belongs to the user
+    var existingPresensi models.Presensi
+    if err := config.DB.Where("id = ? AND asisten_id = ?", presensiID, userID).First(&existingPresensi).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Presensi tidak ditemukan atau tidak memiliki akses"})
+        return
+    }
+
+    // Binding input
+    var input struct {
+        Jenis  string `json:"jenis"`  // "utama" | "pengganti"
+        Status string `json:"status"` // "hadir" | "izin" | "alpha"
+    }
+    
+    if err := c.ShouldBindJSON(&input); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid", "detail": err.Error()})
+        return
+    }
+
+    // Validate input
+    if input.Jenis != "utama" && input.Jenis != "pengganti" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Jenis presensi harus 'utama' atau 'pengganti'"})
+        return
+    }
+
+    if input.Status != "hadir" && input.Status != "izin" && input.Status != "alpha" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Status presensi harus 'hadir', 'izin', atau 'alpha'"})
+        return
+    }
+
+    // Start transaction to update presensi and rekapitulasi
+    tx := config.DB.Begin()
+    defer func() {
+        if r := recover(); r != nil {
+            tx.Rollback()
+        }
+    }()
+
+    // Update presensi
+    existingPresensi.Jenis = input.Jenis
+    existingPresensi.Status = input.Status
+    
+    if err := tx.Save(&existingPresensi).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui presensi"})
+        return
+    }
+
+    // Update rekapitulasi
+    var rekap models.Rekapitulasi
+    if err := tx.Where("asisten_id = ?", userID).First(&rekap).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menemukan rekapitulasi"})
+        return
+    }
+
+    // Recalculate counts based on all presensi records
+    var presensis []models.Presensi
+    if err := tx.Where("asisten_id = ?", userID).Find(&presensis).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghitung ulang rekapitulasi"})
+        return
+    }
+
+    // Reset counters
+    rekap.JumlahHadir = 0
+    rekap.JumlahPengganti = 0
+    rekap.JumlahIzin = 0
+    rekap.JumlahAlpha = 0
+
+    // Recalculate
+    for _, p := range presensis {
+        switch p.Status {
+        case "hadir":
+            if p.Jenis == "utama" {
+                rekap.JumlahHadir++
+            } else if p.Jenis == "pengganti" {
+                rekap.JumlahPengganti++
+            }
+        case "izin":
+            rekap.JumlahIzin++
+        case "alpha":
+            rekap.JumlahAlpha++
+        }
+    }
+
+    rekap.TotalHonor = rekap.HonorPertemuan * (rekap.JumlahHadir + rekap.JumlahPengganti)
+
+    if err := tx.Save(&rekap).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui rekapitulasi"})
+        return
+    }
+
+    tx.Commit()
+
+    c.JSON(http.StatusOK, gin.H{
+        "message": "Presensi berhasil diperbarui",
+        "data":    existingPresensi,
+    })
+}
+
+func DeletePresensi(c *gin.Context) {
+    // Get presensi ID from URL parameter
+    presensiID := c.Param("id")
+    if presensiID == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "ID presensi harus disertakan"})
+        return
+    }
+
+    // Get user ID from token (context)
+    userIDVal, exists := c.Get("user_id")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID tidak ditemukan"})
+        return
+    }
+
+    userIDFloat, ok := userIDVal.(float64)
+    if !ok {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID token tidak valid"})
+        return
+    }
+    userID := uint(userIDFloat)
+
+    // Check if presensi exists and belongs to the user
+    var existingPresensi models.Presensi
+    if err := config.DB.Where("id = ? AND asisten_id = ?", presensiID, userID).First(&existingPresensi).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Presensi tidak ditemukan atau tidak memiliki akses"})
+        return
+    }
+
+    // Start transaction to delete presensi and update rekapitulasi
+    tx := config.DB.Begin()
+    defer func() {
+        if r := recover(); r != nil {
+            tx.Rollback()
+        }
+    }()
+
+    // Delete presensi
+    if err := tx.Delete(&existingPresensi).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghapus presensi"})
+        return
+    }
+
+    // Update rekapitulasi
+    var rekap models.Rekapitulasi
+    if err := tx.Where("asisten_id = ?", userID).First(&rekap).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menemukan rekapitulasi"})
+        return
+    }
+
+    // Recalculate counts based on remaining presensi records
+    var presensis []models.Presensi
+    if err := tx.Where("asisten_id = ?", userID).Find(&presensis).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghitung ulang rekapitulasi"})
+        return
+    }
+
+    // Reset counters
+    rekap.JumlahHadir = 0
+    rekap.JumlahPengganti = 0
+    rekap.JumlahIzin = 0
+    rekap.JumlahAlpha = 0
+
+    // Recalculate
+    for _, p := range presensis {
+        switch p.Status {
+        case "hadir":
+            if p.Jenis == "utama" {
+                rekap.JumlahHadir++
+            } else if p.Jenis == "pengganti" {
+                rekap.JumlahPengganti++
+            }
+        case "izin":
+            rekap.JumlahIzin++
+        case "alpha":
+            rekap.JumlahAlpha++
+        }
+    }
+
+    rekap.TotalHonor = rekap.HonorPertemuan * (rekap.JumlahHadir + rekap.JumlahPengganti)
+
+    if err := tx.Save(&rekap).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui rekapitulasi"})
+        return
+    }
+
+    tx.Commit()
+
+    c.JSON(http.StatusOK, gin.H{
+        "message": "Presensi berhasil dihapus",
+    })
+}

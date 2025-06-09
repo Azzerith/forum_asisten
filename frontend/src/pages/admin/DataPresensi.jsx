@@ -201,7 +201,7 @@ export default function DataPresensi() {
     try {
       setLoading(true);
       await axios.put(
-        `http://localhost:8080/api/admin/presensi/${id}/status`,
+        `http://localhost:8080/api/admin/presensi/${id}`,
         { status: tempStatus },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
@@ -489,143 +489,165 @@ export default function DataPresensi() {
         </div>
 
         {/* Modal for Detail */}
-        {showModal && currentPresensi && (
-          <div className="fixed inset-0 drop-shadow-2xl bg-opacity-30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white text-black rounded-lg shadow-xl w-full max-w-2xl">
-              <div className="flex justify-between items-center border-b px-6 py-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Detail Presensi Asisten
-                </h3>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-500"
-                >
-                  <FiX className="h-6 w-6" />
-                </button>
+{showModal && currentPresensi && (
+  <div className="fixed inset-0 drop-shadow-2xl bg-opacity-30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div className="bg-white text-black rounded-lg shadow-xl w-full max-w-2xl">
+      <div className="flex justify-between items-center border-b px-6 py-4">
+        <h3 className="text-lg font-medium text-gray-900">
+          Detail Presensi Asisten
+        </h3>
+        <button
+          onClick={() => setShowModal(false)}
+          className="text-gray-400 hover:text-gray-500"
+        >
+          <FiX className="h-6 w-6" />
+        </button>
+      </div>
+      <div className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <h4 className="text-sm font-medium text-gray-500 mb-2">Asisten</h4>
+            <div className="flex items-center">
+              <div className="flex-shrink-0 h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <FiUser className="text-blue-600 text-xl" />
               </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-2">Asisten</h4>
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <FiUser className="text-blue-600 text-xl" />
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-lg font-medium text-gray-900">
-                          {currentPresensi.asisten?.nama || 'N/A'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {currentPresensi.asisten?.nim || 'N/A'} • {currentPresensi.jenis}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-2">Mata Kuliah</h4>
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
-                        <FiBook className="text-purple-600 text-xl" />
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-lg font-medium text-gray-900">
-                          {currentPresensi.jadwal?.mata_kuliah?.nama || 'N/A'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {currentPresensi.jadwal?.mata_kuliah?.program_studi?.nama || 'N/A'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-500 mb-1">Hari/Jam</h4>
-                    <div className="flex items-center">
-                      <FiCalendar className="text-gray-400 mr-2" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {currentPresensi.jadwal?.hari}
-                        </p>
-                        <p className="text-sm text-gray-500 flex items-center">
-                          <FiClock className="mr-1" />
-                          {currentPresensi.jadwal?.jam_mulai} - {currentPresensi.jadwal?.jam_selesai}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-500 mb-1">Kelas/Lab</h4>
-                    <p className="text-sm font-medium text-gray-900">
-                      {currentPresensi.jadwal?.kelas}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {currentPresensi.jadwal?.lab}
-                    </p>
-                  </div>
-
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-500 mb-1">Status</h4>
-                    {statusOptions.find(s => s.value === currentPresensi.status) ? (
-                      <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                        statusOptions.find(s => s.value === currentPresensi.status).color
-                      }`}>
-                        {statusOptions.find(s => s.value === currentPresensi.status).label}
-                      </span>
-                    ) : (
-                      <span className="px-3 py-1 text-sm font-semibold rounded-full bg-gray-100 text-gray-800">
-                        {currentPresensi.status}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {currentPresensi.isi_materi && (
-                  <div className="mb-6">
-                    <h4 className="text-sm font-medium text-gray-500 mb-2">Isi Materi</h4>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-gray-700">{currentPresensi.isi_materi}</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="mb-6">
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">
-                    {currentPresensi.status === 'izin' ? 'Bukti Izin' : 'Bukti Kehadiran'}
-                  </h4>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    {currentPresensi.bukti_kehadiran || currentPresensi.bukti_izin ? (
-                      <a 
-                        href={currentPresensi.bukti_kehadiran || currentPresensi.bukti_izin} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center text-blue-600 hover:text-blue-800"
-                      >
-                        <FiDownload className="mr-2" />
-                        Download Bukti
-                      </a>
-                    ) : (
-                      <p className="text-gray-500">Tidak ada bukti</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-4 border-t">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                  >
-                    Tutup
-                  </button>
-                </div>
+              <div className="ml-4">
+                <p className="text-lg font-medium text-gray-900">
+                  {currentPresensi.asisten?.nama || 'N/A'}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {currentPresensi.asisten?.nim || 'N/A'} • {currentPresensi.jenis}
+                </p>
               </div>
             </div>
           </div>
-        )}
+          
+          <div>
+            <h4 className="text-sm font-medium text-gray-500 mb-2">Mata Kuliah</h4>
+            <div className="flex items-center">
+              <div className="flex-shrink-0 h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
+                <FiBook className="text-purple-600 text-xl" />
+              </div>
+              <div className="ml-4">
+                <p className="text-lg font-medium text-gray-900">
+                  {currentPresensi.jadwal?.mata_kuliah?.nama || 'N/A'}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {currentPresensi.jadwal?.mata_kuliah?.program_studi?.nama || 'N/A'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h4 className="text-sm font-medium text-gray-500 mb-1">Hari/Jam</h4>
+            <div className="flex items-center">
+              <FiCalendar className="text-gray-400 mr-2" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  {currentPresensi.jadwal?.hari}
+                </p>
+                <p className="text-sm text-gray-500 flex items-center">
+                  <FiClock className="mr-1" />
+                  {currentPresensi.jadwal?.jam_mulai} - {currentPresensi.jadwal?.jam_selesai}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h4 className="text-sm font-medium text-gray-500 mb-1">Kelas/Lab</h4>
+            <p className="text-sm font-medium text-gray-900">
+              {currentPresensi.jadwal?.kelas}
+            </p>
+            <p className="text-sm text-gray-500">
+              {currentPresensi.jadwal?.lab}
+            </p>
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h4 className="text-sm font-medium text-gray-500 mb-1">Status</h4>
+            {statusOptions.find(s => s.value === currentPresensi.status) ? (
+              <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                statusOptions.find(s => s.value === currentPresensi.status).color
+              }`}>
+                {statusOptions.find(s => s.value === currentPresensi.status).label}
+              </span>
+            ) : (
+              <span className="px-3 py-1 text-sm font-semibold rounded-full bg-gray-100 text-gray-800">
+                {currentPresensi.status}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {currentPresensi.isi_materi && (
+            <div>
+              <h4 className="text-sm font-medium text-gray-500 mb-2">Isi Materi</h4>
+              <div className="bg-gray-50 p-4 rounded-lg h-full">
+                <p className="text-gray-700">{currentPresensi.isi_materi}</p>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <h4 className="text-sm font-medium text-gray-500 mb-2">
+              {currentPresensi.status === 'izin' ? 'Bukti Izin' : 'Bukti Kehadiran'}
+            </h4>
+            <div className="bg-gray-50 p-4 rounded-lg h-full">
+              {currentPresensi.bukti_kehadiran || currentPresensi.bukti_izin ? (
+                <div className="flex flex-col h-full">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-600">
+                      {currentPresensi.status === 'izin' ? 'Bukti izin' : 'Bukti kehadiran'}
+                    </span>
+                    <a 
+                      href={currentPresensi.bukti_kehadiran || currentPresensi.bukti_izin} 
+                      download
+                      className="flex items-center text-blue-600 hover:text-blue-800 text-sm"
+                    >
+                      <FiDownload className="mr-1" />
+                      Download
+                    </a>
+                  </div>
+                  <div className="flex-1 flex items-center justify-center">
+                    <img 
+                      src={currentPresensi.bukti_kehadiran || currentPresensi.bukti_izin} 
+                      alt={currentPresensi.status === 'izin' ? 'Bukti izin' : 'Bukti kehadiran'}
+                      className="max-h-64 w-auto object-contain"
+                      onError={(e) => {
+                        e.target.onerror = null; 
+                        e.target.src = "https://via.placeholder.com/400x300?text=Gagal+memuat+gambar";
+                      }}
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500 text-center">
+                    Klik kanan pada gambar untuk opsi lainnya
+                  </p>
+                </div>
+              ) : (
+                <p className="text-gray-500 h-full flex items-center justify-center">Tidak ada bukti</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-4 border-t">
+          <button
+            type="button"
+            onClick={() => setShowModal(false)}
+            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Tutup
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
       </main>
     </div>
   );

@@ -507,9 +507,9 @@ const fetchAvailableAssistants = async () => {
                                           </div>
                                           <button
                                             onClick={() => handleRemoveAssistant(item.jadwal_id, asisten.id)}
-                                            className="text-red-500 hover:text-red-700 text-sm"
+                                            className="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50 transition-colors"
                                           >
-                                            Hapus
+                                            <FiTrash2 />
                                           </button>
                                         </div>
                                       ))}
