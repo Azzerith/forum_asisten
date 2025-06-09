@@ -26,7 +26,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.Use(middlewares.AuthMiddleware())
 		{
 			protected.POST("/asisten-kelas", controllers.PilihJadwalAsisten)
-			protected.DELETE("/asisten-kelas/:id", controllers.DeleteAsistenKelas)
+			protected.DELETE("/admin/asisten-kelas/:jadwal_id/:asisten_id", controllers.DeleteAsistenFromJadwal)
 
 			protected.POST("/presensi", controllers.CreatePresensi)
 			protected.GET("/presensi", controllers.GetAllPresensi)
