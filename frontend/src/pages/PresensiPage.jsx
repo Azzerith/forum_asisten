@@ -46,8 +46,6 @@ const [showForm, setShowForm] = useState(false);
   const isTodaySchedule = (jadwalItem) => {
     const today = new Date();
     const hari = today.toLocaleDateString("id-ID", { weekday: "long" });
-    const currentHour = today.getHours();
-    const currentMinute = today.getMinutes();
     
     // Pastikan struktur data sesuai dengan respons API
     const jadwalHari = jadwalItem.jadwal?.hari || jadwalItem.hari;
@@ -58,28 +56,43 @@ const [showForm, setShowForm] = useState(false);
     const [mulaiHour, mulaiMinute] = jamMulai.split(':').map(Number);
     const [selesaiHour, selesaiMinute] = jamSelesai.split(':').map(Number);
     
-    const totalCurrent = currentHour * 60 + currentMinute;
     const totalMulai = mulaiHour * 60 + mulaiMinute;
     const totalSelesai = selesaiHour * 60 + selesaiMinute;
+    const totalCurrent = today.getHours() * 60 + today.getMinutes();
     
-    return (
-      jadwalHari.toLowerCase() === hari.toLowerCase() &&
-      totalCurrent >= totalMulai - 30 && // 30 menit sebelum jadwal
-      totalCurrent <= totalSelesai + 30   // 30 menit setelah jadwal
-    );
+    // Cek apakah hari sama
+    if (jadwalHari.toLowerCase() !== hari.toLowerCase()) {
+      return false;
+    }
+    
+    // Cek apakah waktu saat ini berada dalam rentang jadwal (+/- 30 menit)
+    return (totalCurrent >= (totalMulai - 30)) && 
+           (totalCurrent <= (totalSelesai + 30));
   };
+
 
   const uploadToCloudinary = async (file) => {
     if (!file) {
       throw new Error('No file provided');
     }
+  
+    // Validasi sebelum upload
+    if (!file.type.match('image.*')) {
+      throw new Error('Hanya file gambar yang diperbolehkan');
+    }
+  
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      throw new Error('Ukuran file terlalu besar (maksimal 5MB)');
+    }
+  
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'ml_default');
-    
+    formData.append('upload_preset', 'forum_asisten'); // Pastikan ini sudah di-whitelist
+    formData.append('api_key', '455624144262999'); // Tambahkan API key
+  
     try {
       const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/azzerith/image/upload`,
+        `https://api.cloudinary.com/v1_1/azzerith/upload`,
         formData,
         {
           headers: {
@@ -93,25 +106,21 @@ const [showForm, setShowForm] = useState(false);
           },
         }
       );
+  
       if (!response.data.secure_url) {
         throw new Error('No URL returned from Cloudinary');
       }
-      if (!file.type.match('image.*')) {
-        throw new Error('Hanya file gambar yang diperbolehkan');
-      }
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        throw new Error('Ukuran file terlalu besar (maksimal 5MB)');
-      }
+  
       return response.data.secure_url;
     } catch (error) {
-      console.error('Detailed Cloudinary error:', {
-        error: error.response?.data?.error || error.message,
-      config: error.config,});
-      throw new Error('Gagal mengupload gambar: ' + 
-        (error.response?.data?.error?.message || error.message));
+      console.error('Cloudinary upload error:', error);
+      throw new Error(
+        error.response?.data?.error?.message || 
+        error.message || 
+        'Gagal mengupload gambar'
+      );
     }
   };
-
   const handleSubmit = async () => {
     if (!jadwal) return;
     
@@ -119,22 +128,24 @@ const [showForm, setShowForm] = useState(false);
     setError(null);
     
     try {
+      // Validasi file sebelum upload
+      if (status === "hadir" && !fileKehadiran) {
+        throw new Error("Bukti kehadiran diperlukan");
+      }
+      if (status === "izin" && !fileIzin) {
+        throw new Error("Bukti izin diperlukan");
+      }
+  
+      // Upload gambar
       let buktiKehadiranUrl = null;
       let buktiIzinUrl = null;
-
-      // Upload gambar ke Cloudinary sesuai status
+  
       if (status === "hadir") {
-        if (!fileKehadiran) {
-          throw new Error("Bukti kehadiran diperlukan");
-        }
         buktiKehadiranUrl = await uploadToCloudinary(fileKehadiran);
       } else if (status === "izin") {
-        if (!fileIzin) {
-          throw new Error("Bukti izin diperlukan");
-        }
         buktiIzinUrl = await uploadToCloudinary(fileIzin);
       }
-
+  
       // Kirim data ke backend
       const presensiData = {
         jadwal_id: jadwal.jadwal?.id || jadwal.id,
@@ -148,7 +159,7 @@ const [showForm, setShowForm] = useState(false);
           bukti_izin: buktiIzinUrl
         })
       };
-
+  
       const response = await axios.post(
         "http://localhost:8080/api/presensi",
         presensiData,
@@ -163,13 +174,16 @@ const [showForm, setShowForm] = useState(false);
       console.log("Presensi berhasil:", response.data);
       alert("Presensi berhasil dikirim!");
       setShowForm(false);
-      // Reset form
       setFileKehadiran(null);
       setFileIzin(null);
       setIsiMateri("");
     } catch (error) {
       console.error("Gagal submit presensi:", error);
-      setError(error.response?.data?.error || error.message || "Gagal submit presensi");
+      setError(
+        error.response?.data?.error || 
+        error.message || 
+        "Gagal submit presensi"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -199,12 +213,49 @@ const [showForm, setShowForm] = useState(false);
           item.asisten?.id === Number(user.user_id)
         );
         
-        const currentJadwal = userJadwal.find((item) => isTodaySchedule(item));
-    
-        console.log("Filtered jadwal for today:", currentJadwal);
+        // Dapatkan waktu saat ini dalam menit
+        const today = new Date();
+        const currentTimeInMinutes = today.getHours() * 60 + today.getMinutes();
+        
+        // Filter jadwal hari ini dan urutkan berdasarkan waktu mulai
+        const todayJadwal = userJadwal
+          .filter((item) => isTodaySchedule(item))
+          .sort((a, b) => {
+            const jamMulaiA = a.jadwal?.jam_mulai || a.jam_mulai;
+            const jamMulaiB = b.jadwal?.jam_mulai || b.jam_mulai;
+            return jamMulaiA.localeCompare(jamMulaiB);
+          });
+        
+        // Cari jadwal yang aktif sekarang
+        let currentJadwal = null;
+        for (const jadwal of todayJadwal) {
+          const jamMulai = jadwal.jadwal?.jam_mulai || jadwal.jam_mulai;
+          const jamSelesai = jadwal.jadwal?.jam_selesai || jadwal.jam_selesai;
+          
+          const [mulaiHour, mulaiMinute] = jamMulai.split(':').map(Number);
+          const [selesaiHour, selesaiMinute] = jamSelesai.split(':').map(Number);
+          
+          const totalMulai = mulaiHour * 60 + mulaiMinute;
+          const totalSelesai = selesaiHour * 60 + selesaiMinute;
+          
+          // Jadwal dianggap aktif jika:
+          // - Sudah lewat 30 menit sebelum mulai
+          // - Belum lewat 30 menit setelah selesai
+          if (currentTimeInMinutes >= (totalMulai - 30) && 
+              currentTimeInMinutes <= (totalSelesai + 30)) {
+            currentJadwal = jadwal;
+            // Prioritas ke jadwal yang sedang berlangsung (bukan yang akan datang)
+            if (currentTimeInMinutes >= totalMulai && 
+                currentTimeInMinutes <= totalSelesai) {
+              break;
+            }
+          }
+        }
+        
+        console.log("Current jadwal:", currentJadwal);
         if (currentJadwal) {
           setJadwal(currentJadwal);
-          setJadwalDipilih(true); // Otomatis pilih jadwal jika ditemukan
+          setJadwalDipilih(true);
         } else {
           setJadwal(null);
           setJadwalDipilih(false);
