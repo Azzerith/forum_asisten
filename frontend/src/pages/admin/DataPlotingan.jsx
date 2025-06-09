@@ -252,12 +252,16 @@ const fetchAvailableAssistants = async () => {
     try {
       setLoading(true);
       setError(null);
+      const payload = {
+        jadwal_id: Number(formData.JadwalID), // Convert to number
+        asisten_id: Number(formData.AsistenID) // Convert to number
+      };
       
       if (currentSchedule) {
         // Update existing schedule - add new assistant
         await axios.post(
           "http://localhost:8080/api/admin/asisten-kelas",
-          formData,
+          payload,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -280,6 +284,7 @@ const fetchAvailableAssistants = async () => {
         );
         setSuccessMessage("Jadwal asisten berhasil ditambahkan");
       }
+      setFormData({ jadwal_id: "", asisten_id: "" });
       fetchSchedules();
       setShowModal(false);
     } catch (err) {
@@ -352,7 +357,7 @@ const fetchAvailableAssistants = async () => {
       <main className="flex-1 p-6">
         <div className="mb-6 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Data Jadwal Asisten</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Data Plotingan</h1>
             <p className="text-gray-600">Kelola jadwal asisten kelas/laboratorium</p>
             
             {/* Notification Messages */}
@@ -400,7 +405,7 @@ const fetchAvailableAssistants = async () => {
             <input
               type="text"
               placeholder="Cari berdasarkan mata kuliah, dosen, asisten..."
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="text-black block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />

@@ -83,6 +83,56 @@ func PilihJadwalAsisten(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Berhasil memilih jadwal", "data": asistenKelas})
 }
 
+func AdminPilihJadwalAsisten(c *gin.Context) {
+	var input struct {
+		JadwalID  uint `json:"jadwal_id" binding:"required"`
+		AsistenID uint `json:"asisten_id" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Verify schedule exists
+	var jadwal models.Jadwal
+	if err := config.DB.First(&jadwal, input.JadwalID).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Schedule not found"})
+		return
+	}
+
+	// Verify assistant exists
+	var asisten models.User
+	if err := config.DB.First(&asisten, input.AsistenID).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Assistant not found"})
+		return
+	}
+
+	// Check if assignment already exists
+	var existing models.AsistenKelas
+	if err := config.DB.
+		Where("jadwal_id = ? AND asisten_id = ?", input.JadwalID, input.AsistenID).
+		First(&existing).Error; err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Assistant already assigned to this schedule"})
+		return
+	}
+
+	// Create new assignment
+	asistenKelas := models.AsistenKelas{
+		JadwalID:  input.JadwalID,
+		AsistenID: input.AsistenID,
+	}
+
+	if err := config.DB.Create(&asistenKelas).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign assistant"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Successfully assigned assistant to schedule",
+		"data":    asistenKelas,
+	})
+}
+
 func GetJadwalAsisten(c *gin.Context) {
 	// userID := c.GetUint("user_id") // dari JWT
 	var data []models.AsistenKelas
