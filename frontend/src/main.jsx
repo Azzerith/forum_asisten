@@ -15,6 +15,7 @@ import DataProdi from './pages/admin/DataProdi'
 import DataUser from './pages/admin/DataUser'
 import DataMataKuliah from './pages/admin/DataMataKuliah'
 import DataJadwal from './pages/admin/DataJadwal'
+import DataPlotingan from './pages/admin/DataPlotingan'
 
 const router = createBrowserRouter([
   { path: '/', element: <LoginPage /> },
@@ -31,6 +32,7 @@ const router = createBrowserRouter([
   {path:'/admin/data-user',element:<DataUser/>},
   {path:'/admin/data-matkul',element:<DataMataKuliah/>},
   {path:'/admin/data-jadwal', element:<DataJadwal/>},
+  {path:'/admin/data-plotingan', element:<DataPlotingan/>},
 ])
 
 ReactDOM.createRoot(document.getElementById('root')).render(
