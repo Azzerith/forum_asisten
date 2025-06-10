@@ -18,6 +18,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const DataRekapitulasi = () => {
   // State management
+  const [presensiData, setPresensiData] = useState([]);
   const [rekapitulasiData, setRekapitulasiData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -85,10 +86,8 @@ const DataRekapitulasi = () => {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         
-        // Process and merge data
-        const mergedData = processMergedData(presensiResponse.data, rekapResponse.data?.data || []);
-        setRekapitulasiData(mergedData);
-        setFilteredData(mergedData);
+        setPresensiData(presensiResponse.data);
+        setRekapitulasiData(rekapResponse.data?.data || []);
         
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -102,60 +101,73 @@ const DataRekapitulasi = () => {
     fetchData();
   }, []);
 
-  // Process and merge data from both endpoints
-  const processMergedData = (presensiData, rekapData) => {
-    const asistenInPresensi = [...new Set(presensiData.map(p => p.asisten_id))];
-    
-    return asistenInPresensi.map(asistenId => {
-      const presensiAsisten = presensiData.find(p => p.asisten_id === asistenId);
-      const existingRekap = rekapData.find(r => r.asisten_id === asistenId);
+  // Process data for display
+  const processDisplayData = useMemo(() => {
+    if (!presensiData.length || !rekapitulasiData.length) return [];
+
+    // Create a map to store all attendance by assistant and subject
+    const asistenMatkulMap = {};
+
+    // Process all presensi data
+    presensiData.forEach(presensi => {
+      const asistenId = presensi.asisten_id;
+      const matkulId = presensi.jadwal?.mata_kuliah?.id || 'other';
+      const matkulName = presensi.jadwal?.mata_kuliah?.nama || 'Lainnya';
+      const matkulKode = presensi.jadwal?.mata_kuliah?.kode || '-';
+
+      const key = `${asistenId}-${matkulId}`;
       
-      // Calculate counts from presensi data
-      const counts = calculatePresensiCounts(presensiData, asistenId);
+      if (!asistenMatkulMap[key]) {
+        asistenMatkulMap[key] = {
+          asisten_id: asistenId,
+          asisten: presensi.asisten,
+          mata_kuliah: {
+            id: matkulId,
+            nama: matkulName,
+            kode: matkulKode
+          },
+          counts: {
+            hadir: 0,
+            izin: 0,
+            alpha: 0,
+            pengganti: 0
+          }
+        };
+      }
+      
+      // Count based on status and type
+      if (presensi.jenis === 'utama') {
+        asistenMatkulMap[key].counts[presensi.status]++;
+      } else if (presensi.jenis === 'pengganti' && presensi.status === 'hadir') {
+        asistenMatkulMap[key].counts.pengganti++;
+      }
+    });
+
+    // Merge with rekapitulasi data
+    return Object.values(asistenMatkulMap).map(item => {
+      const existingRekap = rekapitulasiData.find(r => r.asisten_id === item.asisten_id);
       
       return {
         id: existingRekap?.id || null,
-        asisten_id: asistenId,
-        asisten: presensiAsisten.asisten,
+        asisten_id: item.asisten_id,
+        asisten: item.asisten,
+        mata_kuliah: item.mata_kuliah,
         tipe_honor: existingRekap?.tipe_honor || null,
         honor_pertemuan: existingRekap?.honor_pertemuan || 0,
-        ...counts,
+        jumlah_hadir: item.counts.hadir,
+        jumlah_izin: item.counts.izin,
+        jumlah_alpha: item.counts.alpha,
+        jumlah_pengganti: item.counts.pengganti,
         total_honor: existingRekap ? 
-          existingRekap.honor_pertemuan * (counts.jumlah_hadir + counts.jumlah_pengganti) : 
+          existingRekap.honor_pertemuan * (item.counts.hadir + item.counts.pengganti) : 
           0
       };
     });
-  };
-
-  // Calculate various counts from presensi data
-  const calculatePresensiCounts = (presensiData, asistenId) => {
-    return {
-      jumlah_hadir: presensiData.filter(p => 
-        p.asisten_id === asistenId && 
-        p.status === 'hadir' && 
-        p.jenis === 'utama'
-      ).length,
-      jumlah_izin: presensiData.filter(p => 
-        p.asisten_id === asistenId && 
-        p.status === 'izin' && 
-        p.jenis === 'utama'
-      ).length,
-      jumlah_alpha: presensiData.filter(p => 
-        p.asisten_id === asistenId && 
-        p.status === 'alpha' && 
-        p.jenis === 'utama'
-      ).length,
-      jumlah_pengganti: presensiData.filter(p => 
-        p.asisten_id === asistenId && 
-        p.status === 'hadir' && 
-        p.jenis === 'pengganti'
-      ).length
-    };
-  };
+  }, [presensiData, rekapitulasiData]);
 
   // Apply filters and sorting
   useEffect(() => {
-    let result = [...rekapitulasiData];
+    let result = [...processDisplayData];
     
     // Apply search filter
     if (searchTerm) {
@@ -163,8 +175,9 @@ const DataRekapitulasi = () => {
       result = result.filter(item => 
         item.asisten?.nama?.toLowerCase().includes(term) ||
         item.asisten?.nim?.toLowerCase().includes(term) ||
-        (item.tipe_honor && `tipe ${item.tipe_honor}`.includes(term))
-      );
+        (item.tipe_honor && `tipe ${item.tipe_honor}`.includes(term)) ||
+        item.mata_kuliah?.nama?.toLowerCase().includes(term));
+      
     }
     
     // Apply sorting
@@ -177,7 +190,7 @@ const DataRekapitulasi = () => {
     });
     
     setFilteredData(result);
-  }, [rekapitulasiData, searchTerm, sortOrder]);
+  }, [processDisplayData, searchTerm, sortOrder]);
 
   // Group data by selected option
   const groupedData = useMemo(() => {
@@ -187,32 +200,34 @@ const DataRekapitulasi = () => {
       let key, label;
       
       if (groupBy === 'matkul') {
-        // Group by mata kuliah (if available)
-        const matkul = item.asisten?.mata_kuliah?.nama || 'Lainnya';
-        key = `matkul-${matkul}`;
-        label = matkul;
+        // Group by mata kuliah
+        key = `matkul-${item.mata_kuliah.id}`;
+        label = item.mata_kuliah.nama;
       } else if (groupBy === 'tipe') {
         // Group by honor type
-        const tipe = item.tipe_honor || 'Belum di-set';
-        key = `tipe-${tipe}`;
-        label = `Tipe ${tipe}`;
+        key = `tipe-${item.tipe_honor || 'none'}`;
+        label = `Tipe ${item.tipe_honor || 'Belum di-set'}`;
       } else {
-        // No grouping
-        key = 'all';
-        label = 'Semua Data';
+        // No grouping - group by asisten (aggregate all matkul)
+        key = `asisten-${item.asisten_id}`;
+        label = `${item.asisten.nama} (${item.asisten.nim})`;
       }
       
       if (!grouped[key]) {
         grouped[key] = {
           key,
           label,
+          mata_kuliah: groupBy === 'matkul' ? item.mata_kuliah : null,
+          tipe_honor: groupBy === 'tipe' ? item.tipe_honor : null,
           items: [],
-          totalHonor: 0
+          totalHonor: 0,
+          totalAsisten: 0
         };
       }
       
       grouped[key].items.push(item);
       grouped[key].totalHonor += item.total_honor || 0;
+      grouped[key].totalAsisten = groupBy === 'all' ? 1 : grouped[key].items.length;
     });
     
     return grouped;
@@ -244,16 +259,17 @@ const DataRekapitulasi = () => {
       setHonorModal(false);
       
       // Refresh data
-      const presensiResponse = await axios.get('http://localhost:8080/api/admin/presensi', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const [presensiResponse, rekapResponse] = await Promise.all([
+        axios.get('http://localhost:8080/api/admin/presensi', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }),
+        axios.get('http://localhost:8080/api/admin/rekapitulasi', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+      ]);
       
-      const rekapResponse = await axios.get('http://localhost:8080/api/admin/rekapitulasi', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      
-      const mergedData = processMergedData(presensiResponse.data, rekapResponse.data?.data || []);
-      setRekapitulasiData(mergedData);
+      setPresensiData(presensiResponse.data);
+      setRekapitulasiData(rekapResponse.data?.data || []);
       
     } catch (err) {
       console.error('Error setting honor type:', err);
@@ -283,16 +299,17 @@ const DataRekapitulasi = () => {
       setEditModal(false);
       
       // Refresh data
-      const presensiResponse = await axios.get('http://localhost:8080/api/admin/presensi', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const [presensiResponse, rekapResponse] = await Promise.all([
+        axios.get('http://localhost:8080/api/admin/presensi', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }),
+        axios.get('http://localhost:8080/api/admin/rekapitulasi', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+      ]);
       
-      const rekapResponse = await axios.get('http://localhost:8080/api/admin/rekapitulasi', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      
-      const mergedData = processMergedData(presensiResponse.data, rekapResponse.data?.data || []);
-      setRekapitulasiData(mergedData);
+      setPresensiData(presensiResponse.data);
+      setRekapitulasiData(rekapResponse.data?.data || []);
       
     } catch (err) {
       console.error('Error updating data:', err);
@@ -314,16 +331,17 @@ const DataRekapitulasi = () => {
       setDeleteModal(false);
       
       // Refresh data
-      const presensiResponse = await axios.get('http://localhost:8080/api/admin/presensi', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const [presensiResponse, rekapResponse] = await Promise.all([
+        axios.get('http://localhost:8080/api/admin/presensi', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }),
+        axios.get('http://localhost:8080/api/admin/rekapitulasi', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+      ]);
       
-      const rekapResponse = await axios.get('http://localhost:8080/api/admin/rekapitulasi', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      
-      const mergedData = processMergedData(presensiResponse.data, rekapResponse.data?.data || []);
-      setRekapitulasiData(mergedData);
+      setPresensiData(presensiResponse.data);
+      setRekapitulasiData(rekapResponse.data?.data || []);
       
     } catch (err) {
       console.error('Error deleting data:', err);
@@ -413,7 +431,7 @@ const DataRekapitulasi = () => {
                 </div>
                 <input
                   type="text"
-                  placeholder="Cari asisten atau tipe honor..."
+                  placeholder="Cari asisten, mata kuliah, atau tipe honor..."
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -430,9 +448,9 @@ const DataRekapitulasi = () => {
                   value={groupBy}
                   onChange={(e) => setGroupBy(e.target.value)}
                 >
-                  <option value="all">Semua Data</option>
-                  <option value="matkul">Mata Kuliah</option>
-                  <option value="tipe">Tipe Honor</option>
+                  <option value="all">Per Asisten</option>
+                  <option value="matkul">Per Mata Kuliah</option>
+                  <option value="tipe">Per Tipe Honor</option>
                 </select>
               </div>
               
@@ -475,7 +493,6 @@ const DataRekapitulasi = () => {
           <div className="overflow-x-auto">
             {Object.values(groupedData).map(group => (
               <div key={group.key} className="mb-6">
-                {/* Group Header */}
                 <div 
                   onClick={() => toggleGroup(group.key)}
                   className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition"
@@ -483,9 +500,14 @@ const DataRekapitulasi = () => {
                   <div className="flex items-center gap-4">
                     <h3 className="font-medium text-lg">
                       {group.label}
+                      {group.mata_kuliah?.kode && (
+                        <span className="ml-2 text-sm text-gray-500">
+                          ({group.mata_kuliah.kode})
+                        </span>
+                      )}
                     </h3>
                     <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                      {group.items.length} Asisten
+                      {group.totalAsisten} {groupBy === 'all' ? 'Mata Kuliah' : 'Asisten'}
                     </span>
                     <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
                       Total Honor: Rp {group.totalHonor.toLocaleString()}
@@ -507,12 +529,19 @@ const DataRekapitulasi = () => {
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asisten</th>
+                            {groupBy === 'all' && (
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mata Kuliah</th>
+                            )}
+                            {groupBy !== 'all' && (
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asisten</th>
+                            )}
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hadir</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Izin</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alpha</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pengganti</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe Honor</th>
+                            {groupBy !== 'tipe' && (
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe Honor</th>
+                            )}
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Honor/Pertemuan</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Honor</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
@@ -521,23 +550,31 @@ const DataRekapitulasi = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                           {group.items.map((item, index) => (
                             <motion.tr
-                              key={item.asisten_id}
+                              key={`${item.asisten_id}-${item.mata_kuliah.id}`}
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
                               transition={{ delay: index * 0.05 }}
                               className="hover:bg-gray-50"
                             >
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <span className="text-blue-600 font-medium">{item.asisten.nama.charAt(0)}</span>
+                              {groupBy === 'all' && (
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-900">{item.mata_kuliah.nama}</div>
+                                  <div className="text-sm text-gray-500">{item.mata_kuliah.kode}</div>
+                                </td>
+                              )}
+                              {groupBy !== 'all' && (
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex items-center">
+                                    <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                      <span className="text-blue-600 font-medium">{item.asisten.nama.charAt(0)}</span>
+                                    </div>
+                                    <div className="ml-4">
+                                      <div className="text-sm font-medium text-gray-900">{item.asisten.nama}</div>
+                                      <div className="text-sm text-gray-500">{item.asisten.nim}</div>
+                                    </div>
                                   </div>
-                                  <div className="ml-4">
-                                    <div className="text-sm font-medium text-gray-900">{item.asisten.nama}</div>
-                                    <div className="text-sm text-gray-500">{item.asisten.nim}</div>
-                                  </div>
-                                </div>
-                              </td>
+                                </td>
+                              )}
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors.hadir}`}>
                                   {item.jumlah_hadir}x
@@ -558,15 +595,17 @@ const DataRekapitulasi = () => {
                                   {item.jumlah_pengganti}x
                                 </span>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                  item.tipe_honor ? 
-                                  tipeHonorColors[item.tipe_honor] || 'bg-gray-100 text-gray-800' : 
-                                  'bg-red-100 text-red-800'
-                                }`}>
-                                  {item.tipe_honor ? `Tipe ${item.tipe_honor}` : 'Belum di-set'}
-                                </span>
-                              </td>
+                              {groupBy !== 'tipe' && (
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                    item.tipe_honor ? 
+                                    tipeHonorColors[item.tipe_honor] || 'bg-gray-100 text-gray-800' : 
+                                    'bg-red-100 text-red-800'
+                                  }`}>
+                                    {item.tipe_honor ? `Tipe ${item.tipe_honor}` : 'Belum di-set'}
+                                  </span>
+                                </td>
+                              )}
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 Rp {item.honor_pertemuan.toLocaleString()}
                               </td>
@@ -603,7 +642,7 @@ const DataRekapitulasi = () => {
 
         {/* Set Honor Modal */}
         {honorModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 drop-shadow-2xl bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <motion.div 
               className="bg-white rounded-lg w-full max-w-md"
               initial={{ opacity: 0, scale: 0.9 }}
@@ -631,11 +670,16 @@ const DataRekapitulasi = () => {
                       required
                     >
                       <option value="">Pilih Asisten</option>
-                      {rekapitulasiData
-                        .filter(item => !item.tipe_honor)
-                        .map(item => (
-                          <option key={item.asisten_id} value={item.asisten_id}>
-                            {item.asisten.nama} ({item.asisten.nim})
+                      {Array.from(new Set(processDisplayData.map(item => item.asisten_id)))
+                        .map(asistenId => {
+                          const asisten = processDisplayData.find(item => item.asisten_id === asistenId)?.asisten;
+                          const hasHonor = rekapitulasiData.some(r => r.asisten_id === asistenId);
+                          return { asistenId, asisten, hasHonor };
+                        })
+                        .filter(({ hasHonor }) => !hasHonor)
+                        .map(({ asistenId, asisten }) => (
+                          <option key={asistenId} value={asistenId}>
+                            {asisten.nama} ({asisten.nim})
                           </option>
                         ))}
                     </select>
@@ -705,6 +749,13 @@ const DataRekapitulasi = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Asisten</label>
                     <p className="text-sm text-gray-900">
                       {currentItem.asisten.nama} ({currentItem.asisten.nim})
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Mata Kuliah</label>
+                    <p className="text-sm text-gray-900">
+                      {currentItem.mata_kuliah.nama} ({currentItem.mata_kuliah.kode})
                     </p>
                   </div>
                   
@@ -819,7 +870,7 @@ const DataRekapitulasi = () => {
                 </div>
                 
                 <p className="mb-6">
-                  Apakah Anda yakin ingin menghapus rekapitulasi untuk asisten <strong>{currentItem.asisten.nama}</strong>?
+                  Apakah Anda yakin ingin menghapus rekapitulasi untuk asisten <strong>{currentItem.asisten.nama}</strong> di mata kuliah <strong>{currentItem.mata_kuliah.nama}</strong>?
                 </p>
                 
                 <div className="flex justify-end space-x-3">
