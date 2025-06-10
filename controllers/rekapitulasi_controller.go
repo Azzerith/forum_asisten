@@ -91,11 +91,12 @@ func GetRekapitulasi(c *gin.Context) {
 
 func UpdateRekapitulasi(c *gin.Context) {
 	var input struct {
-		AsistenID       uint `json:"asisten_id" binding:"required"`
-		JumlahHadir     int  `json:"jumlah_hadir"`
-		JumlahIzin      int  `json:"jumlah_izin"`
-		JumlahAlpha     int  `json:"jumlah_alpha"`
-		JumlahPengganti int  `json:"jumlah_pengganti"`
+		AsistenID       uint   `json:"asisten_id" binding:"required"`
+		JumlahHadir     int    `json:"jumlah_hadir"`
+		JumlahIzin      int    `json:"jumlah_izin"`
+		JumlahAlpha     int    `json:"jumlah_alpha"`
+		JumlahPengganti int    `json:"jumlah_pengganti"`
+		TipeHonor       string `json:"tipe_honor" binding:"omitempty,oneof=A B C D E"` // optional field
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -107,6 +108,17 @@ func UpdateRekapitulasi(c *gin.Context) {
 	if err := config.DB.Where("asisten_id = ?", input.AsistenID).First(&rekap).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Rekapitulasi tidak ditemukan"})
 		return
+	}
+
+	// Update tipe honor if provided
+	if input.TipeHonor != "" {
+		honor, exists := honorMap[input.TipeHonor]
+		if !exists {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Tipe honor tidak valid"})
+			return
+		}
+		rekap.TipeHonor = input.TipeHonor
+		rekap.HonorPertemuan = honor
 	}
 
 	// Hitung ulang dari tabel presensi
@@ -121,6 +133,9 @@ func UpdateRekapitulasi(c *gin.Context) {
 	rekap.JumlahAlpha = int(alpha)
 	rekap.JumlahPengganti = int(pengganti)
 
+	// Hitung ulang total honor
+	rekap.TotalHonor = rekap.HonorPertemuan * (rekap.JumlahHadir + rekap.JumlahPengganti)
+
 	if err := config.DB.Save(&rekap).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengupdate rekapitulasi"})
 		return
@@ -128,7 +143,6 @@ func UpdateRekapitulasi(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Rekapitulasi diperbarui", "data": rekap})
 }
-
 
 func DeleteRekapitulasi(c *gin.Context) {
 	asistenID := c.Param("asisten_id")

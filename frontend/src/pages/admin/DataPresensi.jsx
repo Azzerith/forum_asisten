@@ -31,7 +31,7 @@ export default function DataPresensi() {
   const [successMessage, setSuccessMessage] = useState(null);
   const [expandedGroups, setExpandedGroups] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
-  const [groupBy, setGroupBy] = useState("matakuliah"); // 'matakuliah' or 'date'
+  const [groupBy, setGroupBy] = useState("date"); // 'matakuliah' or 'date'
   const [sortOrder, setSortOrder] = useState("desc"); // 'asc' or 'desc'
   const [editingStatus, setEditingStatus] = useState(null);
   const [tempStatus, setTempStatus] = useState("");
