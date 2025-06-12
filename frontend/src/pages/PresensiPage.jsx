@@ -350,7 +350,7 @@ export default function PresensiPage() {
                 <input
                   type="text"
                   placeholder="Cari berdasarkan mata kuliah, kelas, atau dosen..."
-                  className="w-full border border-gray-300 px-4 py-2 rounded-lg pl-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  className="text-black w-full border border-gray-300 px-4 py-2 rounded-lg pl-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -359,7 +359,7 @@ export default function PresensiPage() {
             </div>
 
             {searchTerm && (
-              <div className="mb-4 max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
+              <div className="text-gray-600 mb-4 max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
                 {filteredJadwal.length > 0 ? (
                   filteredJadwal.map((item) => (
                     <div
@@ -390,22 +390,22 @@ export default function PresensiPage() {
             )}
 
             {selectedJadwalLain && (
-              <div className="mb-4 bg-blue-50 p-4 rounded-lg">
+              <div className="text-white mb-4 bg-blue-600 p-4 rounded-lg">
                 <h3 className="font-medium mb-1">
                   {selectedJadwalLain.jadwal?.mata_kuliah?.nama} - {selectedJadwalLain.jadwal?.kelas}
                 </h3>
-                <p className="text-sm text-gray-600 mb-1">
+                <p className="text-sm text-white mb-1">
                   {selectedJadwalLain.jadwal?.hari}, {selectedJadwalLain.jadwal?.jam_mulai} - {selectedJadwalLain.jadwal?.jam_selesai}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-white">
                   Dosen: {selectedJadwalLain.jadwal?.dosen?.nama}
                 </p>
-                <button
+                <motion.button
                   onClick={() => setSelectedJadwalLain(null)}
-                  className="mt-2 text-sm text-red-600 hover:text-red-800"
+                  className="cursor-pointer inline-flex items-center px-4 py-2 mt-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition-all"
                 >
                   Batalkan pilihan
-                </button>
+                </motion.button>
               </div>
             )}
 

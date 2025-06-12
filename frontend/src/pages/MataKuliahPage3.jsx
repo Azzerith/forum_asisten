@@ -36,7 +36,7 @@ export function ProgramCoursesView({
           return (
             <div key={semester} className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
               <button
-                className="w-full flex justify-between items-center px-6 py-4 text-left hover:bg-gray-50 transition-colors"
+                className="bg-blue-600 w-full flex justify-between items-center px-6 py-4 text-left hover:bg-blue-700 transition-colors"
                 onClick={() => toggleSemester(semester)}
               >
                 <div className="flex items-center">
