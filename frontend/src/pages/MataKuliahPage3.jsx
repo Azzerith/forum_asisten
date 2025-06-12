@@ -1,5 +1,9 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { FiChevronLeft, FiChevronDown, FiChevronUp, FiClock, FiUser, FiUsers, FiCalendar } from "react-icons/fi";
+import { 
+  FiChevronLeft, FiChevronDown, FiChevronUp, 
+  FiClock, FiUser, FiUsers, FiCalendar, 
+  FiX, FiCheck 
+} from "react-icons/fi";
 
 export function ProgramCoursesView({
   selectedProgram,
@@ -114,6 +118,31 @@ export function CourseDetailView({
   handleCancelSchedule, 
   isFull
 }) {
+  const verifyAssistantStatus = (scheduleId) => {
+    if (!user?.id || !takenSchedules.length) return false;
+    
+    const result = takenSchedules.some(item => {
+      const isMatch = item.jadwal_id === scheduleId && item.asisten_id === user.id;
+      console.log("Verification Item:", {
+        itemId: item.id,
+        jadwalId: item.jadwal_id,
+        scheduleId,
+        asistenId: item.asisten_id,
+        userId: user.id,
+        isMatch
+      });
+      return isMatch;
+    });
+    
+    console.log("Final Verification Result:", {
+      scheduleId,
+      userId: user.id,
+      result
+    });
+    
+    return result;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -140,16 +169,14 @@ export function CourseDetailView({
         </div>
 
         <div className="divide-y divide-gray-200">
-        {selectedCourse.schedules.map((schedule) => {
-        // Debugging
-        // console.log("Checking schedule:", schedule.id);
-        
-        const isCurrentUserAssistant = takenSchedules.some(
-          item => item.jadwal_id === schedule.id && item.user?.id === user?.id
-        );
-        
-        // console.log("Current user assistants:", currentUserAssistants);
-
+          {selectedCourse.schedules.map((schedule) => {
+            const isCurrentUserAssistant = verifyAssistantStatus(schedule.id);
+            
+            console.log("Rendering Schedule:", {
+              scheduleId: schedule.id,
+              isCurrentUserAssistant,
+              assistants: schedule.assistants
+            });
 
             return (
               <div key={schedule.id} className="p-6">
@@ -211,11 +238,12 @@ export function CourseDetailView({
                       </span>
                       <button
                         onClick={() => {
-                          if (window.confirm('Apakah Anda yakin ingin membatalkan pendaftaran ini?')) {
-                            handleCancelSchedule(schedule.id);
+                          if (window.confirm('Batalkan pendaftaran?')) {
+                            handleCancelSchedule(schedule.id)
+                              .catch(err => console.error("Cancel error:", err));
                           }
                         }}
-                        className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-800 rounded-lg font-medium flex items-center transition-colors"
+                        className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg flex items-center transition-colors"
                       >
                         <FiX className="mr-1" /> Batalkan
                       </button>
@@ -223,20 +251,18 @@ export function CourseDetailView({
                   ) : (
                     <button
                       onClick={() => handleTakeSchedule(schedule)}
-                      disabled={isFull(schedule.assistants) || !user}
+                      disabled={isFull(schedule.assistants) || !user?.id}
                       className={`px-5 py-2 rounded-lg font-medium ${
-                        isFull(schedule.assistants)
-                          ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                          : !user
+                        isFull(schedule.assistants) || !user?.id
                           ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                           : "bg-blue-600 hover:bg-blue-700 text-white"
                       } transition-colors`}
                     >
-                      {isFull(schedule.assistants) 
-                        ? "Kuota Penuh" 
-                        : !user
+                      {!user?.id 
                         ? "Login untuk Mendaftar"
-                        : "Daftar Sebagai Asisten"}
+                        : isFull(schedule.assistants)
+                          ? "Kuota Penuh"
+                          : "Daftar Sebagai Asisten"}
                     </button>
                   )}
                 </div>

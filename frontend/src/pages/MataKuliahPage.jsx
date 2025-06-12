@@ -4,7 +4,6 @@ import SidebarMenu from "../components/Sidebar";
 import { motion, AnimatePresence } from "framer-motion";
 import ProgramSelectionView from "./MataKuliahPage2";
 import { ProgramCoursesView, CourseDetailView } from "./MataKuliahPage3";
-// import { setJadwal } from "../utils/stateStore";
 
 export default function MataKuliahPage() {
   const [selectedProgram, setSelectedProgram] = useState(null);
@@ -15,112 +14,119 @@ export default function MataKuliahPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const [isUserLoading, setIsUserLoading] = useState(true);
 
-  // Get user from token
+  // Get user from localStorage or token
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
+    const loadUser = () => {
+      setIsUserLoading(true);
       try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        setUser(payload);
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+          setUser(JSON.parse(savedUser));
+          return;
+        }
+
+        const token = localStorage.getItem('token');
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          setUser(payload);
+          localStorage.setItem('user', JSON.stringify(payload));
+        }
       } catch (err) {
-        console.error("Error parsing token:", err);
+        console.error("Error loading user:", err);
+      } finally {
+        setIsUserLoading(false);
       }
-    }
+    };
+
+    loadUser();
   }, []);
 
-  // Fetch all schedules
+  // Fetch all data
   useEffect(() => {
-    const fetchSchedules = async () => {
+    const fetchData = async () => {
+      if (!user?.id) return;
+      
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:8080/api/jadwal", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`
-          }
+        const [schedulesRes, takenRes] = await Promise.all([
+          axios.get("http://localhost:8080/api/jadwal", {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          }),
+          axios.get("http://localhost:8080/api/asisten-kelas", {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          })
+        ]);
+
+        setSchedules(schedulesRes.data);
+        setTakenSchedules(takenRes.data);
+        console.log("Data loaded:", {
+          schedules: schedulesRes.data,
+          takenSchedules: takenRes.data
         });
-        setSchedules(response.data);
-        
-        // Fetch taken schedules
-        const takenResponse = await axios.get("http://localhost:8080/api/asisten-kelas", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`
-          }
-        });
-        setTakenSchedules(takenResponse.data);
-        // setJadwal(takenResponse.data);
-        setLoading(false);
       } catch (err) {
         setError(err.message);
+        console.error("Fetch error:", err);
+      } finally {
         setLoading(false);
       }
     };
 
-    if (user) {
-      fetchSchedules();
-    }
+    fetchData();
   }, [user]);
 
-useEffect(() => {
-  const fetchTakenSchedules = async () => {
+  const handleCancelSchedule = async (scheduleId) => {
     try {
-      const response = await axios.get("http://localhost:8080/api/asisten-kelas", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-        }
+      const asistenKelas = takenSchedules.find(item => 
+        item.jadwal_id === scheduleId && 
+        item.asisten_id === user?.id
+      );
+
+      if (!asistenKelas) {
+        console.error("Not found:", {
+          scheduleId,
+          userId: user?.id,
+          takenSchedules: takenSchedules.filter(i => i.jadwal_id === scheduleId)
+        });
+        alert("Data tidak ditemukan");
+        return;
+      }
+
+      await axios.delete(
+        `http://localhost:8080/api/asisten-kelas/${asistenKelas.jadwal_id}/${asistenKelas.asisten_id}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+
+      const takenRes = await axios.get("http://localhost:8080/api/asisten-kelas", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
-      console.log('Fetched taken schedules:', response.data); // Debug
-      setTakenSchedules(response.data);
+      setTakenSchedules(takenRes.data);
+      alert("Berhasil dibatalkan");
     } catch (err) {
-      console.error('Error fetching taken schedules:', err);
+      console.error("Cancel error:", err.response?.data || err);
+      alert(`Gagal: ${err.response?.data?.message || err.message}`);
     }
   };
 
-  if (user) {
-    fetchTakenSchedules();
+  if (isUserLoading) {
+    return <div>Loading user data...</div>;
   }
-}, [user]);
 
-const handleCancelSchedule = async (scheduleId) => {
-  try {
-    // Cari data asisten kelas yang akan dihapus
-    const asistenKelas = takenSchedules.find(
-      item => item.jadwal_id === scheduleId && item.user.id === user?.id
+  if (!user?.id) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-red-500">User tidak terdeteksi</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Refresh
+        </button>
+      </div>
     );
-
-    if (!asistenKelas) {
-      console.error('Asisten kelas tidak ditemukan:', { scheduleId, userId: user?.id });
-      alert('Data pendaftaran tidak ditemukan');
-      return;
-    }
-
-    console.log('Deleting asisten kelas:', asistenKelas.id); // Debug
-    
-    await axios.delete(`http://localhost:8080/api/asisten-kelas/${asistenKelas.id}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`
-      }
-    });
-
-    // Refresh data setelah berhasil
-    const [schedulesRes, takenRes] = await Promise.all([
-      axios.get("http://localhost:8080/api/jadwal", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      }),
-      axios.get("http://localhost:8080/api/asisten-kelas", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      })
-    ]);
-    
-    setSchedules(schedulesRes.data);
-    setTakenSchedules(takenRes.data);
-    
-    alert('Pendaftaran berhasil dibatalkan');
-  } catch (err) {
-    console.error('Error canceling schedule:', err);
-    alert(`Gagal membatalkan: ${err.response?.data?.message || err.message}`);
   }
-};
+
 
   // Group schedules by program studi
   const programs = schedules.reduce((acc, schedule) => {
@@ -187,9 +193,9 @@ const handleCancelSchedule = async (scheduleId) => {
   function getAssistantsForSchedule(jadwalId) {
     const assistants = takenSchedules
       .filter(item => item.jadwal_id === jadwalId)
-      .map(item => item.user?.nama || "-"); // Ambil hanya nama atau "-"
+      .map(item => item.user?.nama || "-");
     
-    // Pastikan selalu ada 2 asisten (isi dengan "-" jika kurang)
+    // Pastikan selalu ada 2 asisten
     while (assistants.length < 2) {
       assistants.push("-");
     }
