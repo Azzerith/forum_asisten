@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import SidebarMenu from "../components/Sidebar";
-import { FiCheckCircle, FiPaperclip, FiPlus, FiSearch } from "react-icons/fi";
+import { FiCheckCircle, FiPaperclip, FiPlus, FiSearch, FiX } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -23,6 +23,68 @@ export default function PresensiPage() {
   const [selectedJadwalLain, setSelectedJadwalLain] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [jenisPresensi, setJenisPresensi] = useState("utama");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // Modal components
+  const SuccessModal = () => (
+    <div className="fixed inset-0 drop-shadow-2xl bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50">
+      <motion.div 
+        className="bg-white p-6 rounded-xl max-w-md w-full mx-4"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-semibold text-green-600 flex items-center gap-2">
+            <FiCheckCircle className="text-2xl" />
+            Berhasil
+          </h3>
+          <button 
+            onClick={() => setShowSuccessModal(false)}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <FiX className="text-xl" />
+          </button>
+        </div>
+        <p className="text-gray-700 mb-4">{successMessage}</p>
+        <button
+          onClick={() => setShowSuccessModal(false)}
+          className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+        >
+          Tutup
+        </button>
+      </motion.div>
+    </div>
+  );
+
+  const ErrorModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <motion.div 
+        className="bg-white p-6 rounded-xl max-w-md w-full mx-4"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-semibold text-red-600">Error</h3>
+          <button 
+            onClick={() => setShowErrorModal(false)}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <FiX className="text-xl" />
+          </button>
+        </div>
+        <p className="text-gray-700 mb-4">{errorMessage}</p>
+        <button
+          onClick={() => setShowErrorModal(false)}
+          className="w-full py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+        >
+          Tutup
+        </button>
+      </motion.div>
+    </div>
+  );
 
   // Ambil user dari token
   useEffect(() => {
@@ -34,10 +96,14 @@ export default function PresensiPage() {
         setUser({ user_id: payload.user_id, ...payload });
       } catch (err) {
         console.error("Token parsing error:", err);
-        navigate("/login");
+        setErrorMessage("Sesi login telah habis, silahkan login kembali");
+        setShowErrorModal(true);
+        setTimeout(() => navigate("/login"), 2000);
       }
     } else {
-      navigate("/login");
+      setErrorMessage("Anda harus login terlebih dahulu");
+      setShowErrorModal(true);
+      setTimeout(() => navigate("/login"), 2000);
     }
   }, [navigate]);
 
@@ -165,7 +231,8 @@ export default function PresensiPage() {
       );
       
       console.log("Presensi berhasil:", response.data);
-      alert("Presensi berhasil dikirim!");
+      setSuccessMessage("Presensi berhasil dikirim!");
+      setShowSuccessModal(true);
       setShowForm(false);
       setShowPresensiLain(false);
       setFileKehadiran(null);
@@ -174,11 +241,12 @@ export default function PresensiPage() {
       setSelectedJadwalLain(null);
     } catch (error) {
       console.error("Gagal submit presensi:", error);
-      setError(
-        error.response?.data?.error || 
-        error.message || 
-        "Gagal submit presensi"
-      );
+      const errorMsg = error.response?.data?.error || 
+                      error.message || 
+                      "Gagal submit presensi";
+      setErrorMessage(errorMsg);
+      setShowErrorModal(true);
+      setError(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -250,7 +318,12 @@ export default function PresensiPage() {
         }
       } catch (err) {
         console.error("Gagal mengambil data jadwal", err);
-        setError(err.response?.data?.error || err.message || "Gagal mengambil data");
+        const errorMsg = err.response?.data?.error || 
+                        err.message || 
+                        "Gagal mengambil data";
+        setErrorMessage(errorMsg);
+        setShowErrorModal(true);
+        setError(errorMsg);
       } finally {
         setLoading(false);
       }
@@ -287,28 +360,12 @@ export default function PresensiPage() {
     );
   }
 
-  // UI saat error
-  if (error) {
-    return (
-      <div className="flex min-h-screen bg-gray-50">
-        <SidebarMenu />
-        <main className="flex-1 p-6 flex justify-center items-center">
-          <div className="text-center text-red-500">
-            <p>Gagal memuat data: {error}</p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Coba Lagi
-            </button>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className="flex min-h-screen min-w-screen bg-gray-50">
+      {/* Success and Error Modals */}
+      {showSuccessModal && <SuccessModal />}
+      {showErrorModal && <ErrorModal />}
+
       <SidebarMenu />
       <main className="flex-1 p-6">
         <motion.h1
