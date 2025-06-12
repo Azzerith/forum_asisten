@@ -78,26 +78,29 @@ export default function MataKuliahPage() {
 
   const handleCancelSchedule = async (scheduleId) => {
     try {
+      // Find the assignment record
       const asistenKelas = takenSchedules.find(item => 
-        item.jadwal_id === scheduleId && 
-        item.asisten_id === user?.id
+        item.jadwal.id === scheduleId &&  // Note: changed from jadwal_id to jadwal.id
+        item.user.id === user?.id
       );
-
+  
       if (!asistenKelas) {
-        console.error("Not found:", {
+        console.error("Assignment not found:", {
           scheduleId,
           userId: user?.id,
-          takenSchedules: takenSchedules.filter(i => i.jadwal_id === scheduleId)
+          takenSchedules
         });
         alert("Data tidak ditemukan");
         return;
       }
-
+  
+      // Construct proper URL
       await axios.delete(
-        `http://localhost:8080/api/asisten-kelas/${asistenKelas.jadwal_id}/${asistenKelas.asisten_id}`,
+        `http://localhost:8080/api/asisten-kelas/${asistenKelas.jadwal.id}/${asistenKelas.user.id}`,
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
-
+  
+      // Refresh data
       const takenRes = await axios.get("http://localhost:8080/api/asisten-kelas", {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
@@ -105,7 +108,7 @@ export default function MataKuliahPage() {
       alert("Berhasil dibatalkan");
     } catch (err) {
       console.error("Cancel error:", err.response?.data || err);
-      alert(`Gagal: ${err.response?.data?.message || err.message}`);
+      alert(`Gagal: ${err.response?.data?.error || err.message}`);
     }
   };
 

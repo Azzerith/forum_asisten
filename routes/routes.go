@@ -26,7 +26,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.Use(middlewares.AuthMiddleware())
 		{
 			protected.POST("/asisten-kelas", controllers.PilihJadwalAsisten)
-			protected.DELETE("/admin/asisten-kelas/:jadwal_id/:asisten_id", controllers.DeleteAsistenFromJadwal)
+			protected.DELETE("/asisten-kelas/:jadwal_id/:asisten_id", controllers.DeleteAsistenFromJadwal)
 
 			protected.POST("/presensi", controllers.CreatePresensi)
 			protected.GET("/presensi", controllers.GetAllPresensi)
@@ -70,7 +70,7 @@ func SetupRoutes(r *gin.Engine) {
 			admin.POST("/asisten-kelas", controllers.AdminPilihJadwalAsisten)
 			admin.GET("/asisten-kelas", controllers.GetJadwalAsisten)
 			admin.PUT("/asisten-kelas/:id", controllers.UpdateAsistenKelas)
-			admin.DELETE("/admin/asisten-kelas/:jadwal_id/:asisten_id", controllers.DeleteAsistenFromJadwal)
+			admin.DELETE("/asisten-kelas/:jadwal_id/:asisten_id", controllers.DeleteAsistenFromJadwal)
 
 			admin.GET("/presensi", controllers.GetAllPresensi)
 			admin.PUT("presensi/:id", controllers.UpdatePresensi)
