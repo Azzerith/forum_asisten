@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import SidebarMenu from "../components/Sidebar";
-import { FiCheckCircle, FiPaperclip } from "react-icons/fi";
+import { FiCheckCircle, FiPaperclip, FiPlus, FiSearch } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-// import { Cloudinary } from "@cloudinary/url-gen";
 
 export default function PresensiPage() {
   const [jadwal, setJadwal] = useState(null);
@@ -13,17 +12,17 @@ export default function PresensiPage() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const [status, setStatus] = useState("hadir");
-const [fileKehadiran, setFileKehadiran] = useState(null);
-const [fileIzin, setFileIzin] = useState(null);
-const [isiMateri, setIsiMateri] = useState("");
-const [jadwalDipilih, setJadwalDipilih] = useState(false);
-const [showForm, setShowForm] = useState(false);
+  const [fileKehadiran, setFileKehadiran] = useState(null);
+  const [fileIzin, setFileIzin] = useState(null);
+  const [isiMateri, setIsiMateri] = useState("");
+  const [jadwalDipilih, setJadwalDipilih] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-// const cld = new Cloudinary({
-//   cloud: {
-//     cloudName: 'azzerith',
-//   }
-// });
+  const [showPresensiLain, setShowPresensiLain] = useState(false);
+  const [allJadwal, setAllJadwal] = useState([]);
+  const [selectedJadwalLain, setSelectedJadwalLain] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [jenisPresensi, setJenisPresensi] = useState("utama");
 
   // Ambil user dari token
   useEffect(() => {
@@ -47,12 +46,10 @@ const [showForm, setShowForm] = useState(false);
     const today = new Date();
     const hari = today.toLocaleDateString("id-ID", { weekday: "long" });
     
-    // Pastikan struktur data sesuai dengan respons API
     const jadwalHari = jadwalItem.jadwal?.hari || jadwalItem.hari;
     const jamMulai = jadwalItem.jadwal?.jam_mulai || jadwalItem.jam_mulai;
     const jamSelesai = jadwalItem.jadwal?.jam_selesai || jadwalItem.jam_selesai;
     
-    // Konversi jam ke menit untuk perbandingan
     const [mulaiHour, mulaiMinute] = jamMulai.split(':').map(Number);
     const [selesaiHour, selesaiMinute] = jamSelesai.split(':').map(Number);
     
@@ -60,28 +57,24 @@ const [showForm, setShowForm] = useState(false);
     const totalSelesai = selesaiHour * 60 + selesaiMinute;
     const totalCurrent = today.getHours() * 60 + today.getMinutes();
     
-    // Cek apakah hari sama
     if (jadwalHari.toLowerCase() !== hari.toLowerCase()) {
       return false;
     }
     
-    // Cek apakah waktu saat ini berada dalam rentang jadwal (+/- 30 menit)
     return (totalCurrent >= (totalMulai - 30)) && 
            (totalCurrent <= (totalSelesai + 30));
   };
-
 
   const uploadToCloudinary = async (file) => {
     if (!file) {
       throw new Error('No file provided');
     }
   
-    // Validasi sebelum upload
     if (!file.type.match('image.*')) {
       throw new Error('Hanya file gambar yang diperbolehkan');
     }
   
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+    if (file.size > 5 * 1024 * 1024) {
       throw new Error('Ukuran file terlalu besar (maksimal 5MB)');
     }
   
@@ -121,14 +114,16 @@ const [showForm, setShowForm] = useState(false);
       );
     }
   };
-  const handleSubmit = async () => {
-    if (!jadwal) return;
+
+  const handleSubmit = async (isPresensiLain = false) => {
+    const jadwalToUse = isPresensiLain ? selectedJadwalLain : jadwal;
+    
+    if (!jadwalToUse) return;
     
     setIsSubmitting(true);
     setError(null);
     
     try {
-      // Validasi file sebelum upload
       if (status === "hadir" && !fileKehadiran) {
         throw new Error("Bukti kehadiran diperlukan");
       }
@@ -136,7 +131,6 @@ const [showForm, setShowForm] = useState(false);
         throw new Error("Bukti izin diperlukan");
       }
   
-      // Upload gambar
       let buktiKehadiranUrl = null;
       let buktiIzinUrl = null;
   
@@ -146,10 +140,9 @@ const [showForm, setShowForm] = useState(false);
         buktiIzinUrl = await uploadToCloudinary(fileIzin);
       }
   
-      // Kirim data ke backend
       const presensiData = {
-        jadwal_id: jadwal.jadwal?.id || jadwal.id,
-        jenis: "utama",
+        jadwal_id: jadwalToUse.jadwal?.id || jadwalToUse.id,
+        jenis: jenisPresensi,
         status: status,
         ...(status === "hadir" && {
           bukti_kehadiran: buktiKehadiranUrl,
@@ -174,9 +167,11 @@ const [showForm, setShowForm] = useState(false);
       console.log("Presensi berhasil:", response.data);
       alert("Presensi berhasil dikirim!");
       setShowForm(false);
+      setShowPresensiLain(false);
       setFileKehadiran(null);
       setFileIzin(null);
       setIsiMateri("");
+      setSelectedJadwalLain(null);
     } catch (error) {
       console.error("Gagal submit presensi:", error);
       setError(
@@ -188,7 +183,6 @@ const [showForm, setShowForm] = useState(false);
       setIsSubmitting(false);
     }
   };
-
 
   // Ambil data presensi/jadwal asisten
   useEffect(() => {
@@ -205,19 +199,18 @@ const [showForm, setShowForm] = useState(false);
           },
         });
     
-        const allJadwal = Array.isArray(res.data) ? res.data : [res.data];
-        console.log("All jadwal:", allJadwal);
+        const allJadwalData = Array.isArray(res.data) ? res.data : [res.data];
+        setAllJadwal(allJadwalData);
+        console.log("All jadwal:", allJadwalData);
     
-        const userJadwal = allJadwal.filter((item) => 
+        const userJadwal = allJadwalData.filter((item) => 
           item.asisten_id === Number(user.user_id) || 
           item.asisten?.id === Number(user.user_id)
         );
         
-        // Dapatkan waktu saat ini dalam menit
         const today = new Date();
         const currentTimeInMinutes = today.getHours() * 60 + today.getMinutes();
         
-        // Filter jadwal hari ini dan urutkan berdasarkan waktu mulai
         const todayJadwal = userJadwal
           .filter((item) => isTodaySchedule(item))
           .sort((a, b) => {
@@ -226,7 +219,6 @@ const [showForm, setShowForm] = useState(false);
             return jamMulaiA.localeCompare(jamMulaiB);
           });
         
-        // Cari jadwal yang aktif sekarang
         let currentJadwal = null;
         for (const jadwal of todayJadwal) {
           const jamMulai = jadwal.jadwal?.jam_mulai || jadwal.jam_mulai;
@@ -238,13 +230,9 @@ const [showForm, setShowForm] = useState(false);
           const totalMulai = mulaiHour * 60 + mulaiMinute;
           const totalSelesai = selesaiHour * 60 + selesaiMinute;
           
-          // Jadwal dianggap aktif jika:
-          // - Sudah lewat 30 menit sebelum mulai
-          // - Belum lewat 30 menit setelah selesai
           if (currentTimeInMinutes >= (totalMulai - 30) && 
               currentTimeInMinutes <= (totalSelesai + 30)) {
             currentJadwal = jadwal;
-            // Prioritas ke jadwal yang sedang berlangsung (bukan yang akan datang)
             if (currentTimeInMinutes >= totalMulai && 
                 currentTimeInMinutes <= totalSelesai) {
               break;
@@ -270,6 +258,19 @@ const [showForm, setShowForm] = useState(false);
 
     fetchPresensiData();
   }, [user?.user_id]);
+
+  const filteredJadwal = allJadwal.filter(jadwal => {
+    const searchLower = searchTerm.toLowerCase();
+    const mataKuliah = jadwal.jadwal?.mata_kuliah?.nama || jadwal.mata_kuliah?.nama || "";
+    const kelas = jadwal.jadwal?.kelas || jadwal.kelas || "";
+    const dosen = jadwal.jadwal?.dosen?.nama || jadwal.dosen?.nama || "";
+    
+    return (
+      mataKuliah.toLowerCase().includes(searchLower) ||
+      kelas.toLowerCase().includes(searchLower) ||
+      dosen.toLowerCase().includes(searchLower)
+    );
+  });
 
   // UI saat loading
   if (loading) {
@@ -306,39 +307,6 @@ const [showForm, setShowForm] = useState(false);
     );
   }
 
-  // UI jika tidak ada jadwal hari ini
-  if (!jadwal) {
-    return (
-      <div className="flex min-h-screen min-w-screen bg-gray-50">
-        <SidebarMenu />
-        <main className="flex-1 flex items-center justify-center p-6">
-          <motion.div
-            className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="text-6xl mb-4">📭</div>
-            <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-              Tidak Ada Jadwal Hari Ini
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Kamu tidak memiliki jadwal mengajar pada hari dan jam ini. Silakan
-              cek kembali nanti atau hubungi koordinator jika ada kesalahan.
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-all"
-            >
-              Muat Ulang
-            </button>
-          </motion.div>
-        </main>
-      </div>
-    );
-  }
-
-  // UI jika jadwal ditemukan
   return (
     <div className="flex min-h-screen min-w-screen bg-gray-50">
       <SidebarMenu />
@@ -352,33 +320,282 @@ const [showForm, setShowForm] = useState(false);
           Presensi Asisten
         </motion.h1>
 
-        {/* Jadwal */}
-        <motion.div
-          onClick={() => setShowForm(!showForm)}
-          className="cursor-pointer bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-6 mb-6 shadow-lg hover:scale-[1.01] transition-transform"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.3 }}
+        {/* Tombol Presensi Lain */}
+        <motion.button
+          onClick={() => {
+            setShowPresensiLain(!showPresensiLain);
+            setShowForm(false);
+          }}
+          className="mb-6 flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-all"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
-          <div className="flex items-center gap-4 mb-2">
-            <span className="text-3xl">⏰</span>
-            <h2 className="text-xl font-semibold">
-              {jadwal.jadwal?.mata_kuliah?.nama} - {jadwal.jadwal?.kelas}
-            </h2>
-          </div>
-          <p className="text-sm opacity-90 mb-1">
-            Dosen: {jadwal.jadwal?.dosen?.nama}
-          </p>
-          <p className="text-sm opacity-90">
-            Jadwal: {jadwal.jadwal?.hari}, {jadwal.jadwal?.jam_mulai} - {jadwal.jadwal?.jam_selesai}, 
-            {jadwal.jadwal?.lab}
-          </p>
-          <div className="mt-3 text-sm">
-            {showForm ? "▲ Tutup form presensi" : "▼ Klik untuk presensi"}
-          </div>
-        </motion.div>
+          <FiPlus />
+          Presensi Lain
+        </motion.button>
 
-        {/* Form Presensi */}
+        {/* Form Presensi Lain */}
+        {showPresensiLain && (
+          <motion.div
+            className="bg-white p-6 rounded-xl shadow mb-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Presensi Lain</h2>
+            
+            <div className="mb-4">
+              <label className="block font-medium mb-2 text-gray-700">Cari Jadwal</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Cari berdasarkan mata kuliah, kelas, atau dosen..."
+                  className="w-full border border-gray-300 px-4 py-2 rounded-lg pl-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <FiSearch className="absolute left-3 top-3 text-gray-400" />
+              </div>
+            </div>
+
+            {searchTerm && (
+              <div className="mb-4 max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
+                {filteredJadwal.length > 0 ? (
+                  filteredJadwal.map((item) => (
+                    <div
+                      key={item.jadwal?.id || item.id}
+                      onClick={() => {
+                        setSelectedJadwalLain(item);
+                        setSearchTerm("");
+                      }}
+                      className={`p-3 hover:bg-blue-50 cursor-pointer ${
+                        selectedJadwalLain?.jadwal?.id === item.jadwal?.id ? 'bg-blue-100' : ''
+                      }`}
+                    >
+                      <div className="font-medium">
+                        {item.jadwal?.mata_kuliah?.nama} - {item.jadwal?.kelas}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {item.jadwal?.hari}, {item.jadwal?.jam_mulai} - {item.jadwal?.jam_selesai}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Dosen: {item.jadwal?.dosen?.nama}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-3 text-gray-500">Tidak ditemukan jadwal</div>
+                )}
+              </div>
+            )}
+
+            {selectedJadwalLain && (
+              <div className="mb-4 bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-medium mb-1">
+                  {selectedJadwalLain.jadwal?.mata_kuliah?.nama} - {selectedJadwalLain.jadwal?.kelas}
+                </h3>
+                <p className="text-sm text-gray-600 mb-1">
+                  {selectedJadwalLain.jadwal?.hari}, {selectedJadwalLain.jadwal?.jam_mulai} - {selectedJadwalLain.jadwal?.jam_selesai}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Dosen: {selectedJadwalLain.jadwal?.dosen?.nama}
+                </p>
+                <button
+                  onClick={() => setSelectedJadwalLain(null)}
+                  className="mt-2 text-sm text-red-600 hover:text-red-800"
+                >
+                  Batalkan pilihan
+                </button>
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="block font-medium mb-2 text-gray-700">Jenis Presensi</label>
+              <select
+                value={jenisPresensi}
+                onChange={(e) => setJenisPresensi(e.target.value)}
+                className="text-black w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              >
+                <option value="utama">Utama</option>
+                <option value="pengganti">Pengganti</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block font-medium mb-2 text-gray-700">Status</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="text-black w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              >
+                <option value="hadir">Hadir</option>
+                <option value="izin">Izin</option>
+              </select>
+            </div>
+
+            {status === "hadir" && (
+              <>
+                <div className="mb-4">
+                  <label className="block font-medium mb-2 text-gray-700">
+                    Upload Bukti Kehadiran (Foto tanggal di komputer dosen)
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-all">
+                      <FiPaperclip className="mr-2" />
+                      Pilih File
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setFileKehadiran(e.target.files[0])}
+                        className="hidden"
+                        required
+                      />
+                    </label>
+                    {fileKehadiran && (
+                      <div className="relative">
+                        <img
+                          src={URL.createObjectURL(fileKehadiran)}
+                          alt="Preview Kehadiran"
+                          className="w-20 h-20 object-cover rounded border"
+                        />
+                        <button
+                          onClick={() => setFileKehadiran(null)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block font-medium mb-2 text-gray-700">Isi Materi</label>
+                  <textarea
+                    value={isiMateri}
+                    onChange={(e) => setIsiMateri(e.target.value)}
+                    className="text-black w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    rows="4"
+                    placeholder="Masukkan materi yang diajarkan..."
+                    required
+                  ></textarea>
+                </div>
+              </>
+            )}
+
+            {status === "izin" && (
+              <div className="mb-4">
+                <label className="block font-medium mb-2 text-gray-700">Upload Bukti Izin</label>
+                <div className="flex items-center gap-4">
+                  <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition-all">
+                    <FiPaperclip className="mr-2" />
+                    Pilih File
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setFileIzin(e.target.files[0])}
+                      className="hidden"
+                      required
+                    />
+                  </label>
+                  {fileIzin && (
+                    <div className="relative">
+                      <img
+                        src={URL.createObjectURL(fileIzin)}
+                        alt="Preview Izin"
+                        className="w-20 h-20 object-cover rounded border"
+                      />
+                      <button
+                        onClick={() => setFileIzin(null)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <motion.button
+              onClick={() => handleSubmit(true)}
+              disabled={isSubmitting || !selectedJadwalLain}
+              className={`w-full py-3 px-4 rounded-lg text-white font-medium text-lg ${
+                status === "izin"
+                  ? "bg-gradient-to-r from-red-600 to-red-700"
+                  : "bg-gradient-to-r from-green-600 to-green-700"
+              } shadow-md disabled:opacity-70`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {isSubmitting ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Memproses...
+                </span>
+              ) : status === "izin" ? (
+                "Ajukan Izin"
+              ) : (
+                "Submit Presensi Lain"
+              )}
+            </motion.button>
+          </motion.div>
+        )}
+
+        {/* Jadwal Hari Ini */}
+        {jadwal ? (
+          <motion.div
+            onClick={() => setShowForm(!showForm)}
+            className="cursor-pointer bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-6 mb-6 shadow-lg hover:scale-[1.01] transition-transform"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+          >
+            <div className="flex items-center gap-4 mb-2">
+              <span className="text-3xl">⏰</span>
+              <h2 className="text-xl font-semibold">
+                {jadwal.jadwal?.mata_kuliah?.nama} - {jadwal.jadwal?.kelas}
+              </h2>
+            </div>
+            <p className="text-sm opacity-90 mb-1">
+              Dosen: {jadwal.jadwal?.dosen?.nama}
+            </p>
+            <p className="text-sm opacity-90">
+              Jadwal: {jadwal.jadwal?.hari}, {jadwal.jadwal?.jam_mulai} - {jadwal.jadwal?.jam_selesai}, 
+              {jadwal.jadwal?.lab}
+            </p>
+            <div className="mt-3 text-sm">
+              {showForm ? "▲ Tutup form presensi" : "▼ Klik untuk presensi"}
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md mb-6"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="text-6xl mb-4">📭</div>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+              Tidak Ada Jadwal Hari Ini
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Kamu tidak memiliki jadwal mengajar pada hari dan jam ini. 
+              Gunakan tombol "Presensi Lain" di atas jika ingin melakukan presensi di luar jadwal.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-all"
+            >
+              Muat Ulang
+            </button>
+          </motion.div>
+        )}
+
+        {/* Form Presensi Reguler */}
         {showForm && (
           <motion.div
             className="bg-white p-6 rounded-xl shadow mb-6"
@@ -489,7 +706,7 @@ const [showForm, setShowForm] = useState(false);
             )}
 
             <motion.button
-              onClick={handleSubmit}
+              onClick={() => handleSubmit(false)}
               disabled={isSubmitting}
               className={`w-full py-3 px-4 rounded-lg text-white font-medium text-lg ${
                 status === "izin"
