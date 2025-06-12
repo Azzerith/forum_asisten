@@ -359,7 +359,7 @@ const showSuccess = (message) => {
             
           {Object.entries(groupedSchedules).map(([programStudi, semesters]) => (
             <div key={programStudi} className="mb-6">
-              <h2 className="text-white text-xl font-semibold bg-gradient-to-b from-blue-700 to-indigo-700 p-4" >{programStudi}</h2>
+              <h2 className="text-white text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-700 p-4" >{programStudi}</h2>
               
               {Object.entries(semesters).map(([semester, schedules]) => {
                 const key = `${programStudi}-${semester}`;

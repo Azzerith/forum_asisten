@@ -174,7 +174,7 @@ export default function MataKuliahPage() {
         <p className="text-red-500">User tidak terdeteksi</p>
         <button 
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+          className="mt-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded"
         >
           Refresh
         </button>
@@ -530,7 +530,7 @@ function ProgramCoursesView({
           return (
             <div key={semester} className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
               <button
-                className="bg-blue-600 w-full flex justify-between items-center px-6 py-4 text-left hover:bg-blue-700 transition-colors"
+                className="bg-gradient-to-r from-blue-600 to-indigo-700 w-full flex justify-between items-center px-6 py-4 text-left hover:bg-blue-700 transition-colors"
                 onClick={() => toggleSemester(semester)}
               >
                 <div className="flex items-center">

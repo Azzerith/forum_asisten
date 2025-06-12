@@ -392,7 +392,7 @@ const fetchAvailableAssistants = async () => {
             }}
             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <FiPlus className="mr-2" /> Tambah Jadwal
+            <FiPlus className="mr-2" /> Ploting Asisten
           </button>
         </div>
 
@@ -420,7 +420,7 @@ const fetchAvailableAssistants = async () => {
           ) : (
             Object.entries(groupedSchedules).map(([programStudi, semesters]) => (
               <div key={programStudi} className="mb-6">
-                <h2 className="text-white text-xl font-semibold bg-gradient-to-b from-blue-700 to-indigo-700 p-4">
+                <h2 className="text-white text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-700 p-4">
                   {programStudi}
                 </h2>
                 
@@ -543,7 +543,7 @@ const fetchAvailableAssistants = async () => {
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
               <div className="flex justify-between items-center border-b px-6 py-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  {currentSchedule ? "Tambah Asisten ke Jadwal" : "Tambah Jadwal Asisten"}
+                  {currentSchedule ? "Tambah Asisten ke Jadwal" : "Ploting Jadwal Asisten"}
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}

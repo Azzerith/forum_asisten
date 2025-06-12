@@ -258,7 +258,7 @@ export default function DataMataKuliah() {
                 filteredGroupedMataKuliah.map(group => (
                   <div key={group.prodi.id} className="border border-gray-200 rounded-lg overflow-hidden">
                     <div 
-                      className="flex justify-between items-center p-4 bg-gradient-to-b from-blue-700 to-indigo-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-600 to-indigo-700 cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => toggleProdi(group.prodi.id)}
                     >
                       <h3 className="font-semibold text-lg text-white">
