@@ -4,13 +4,10 @@ import AdminSidebar from '../../components/AdminSidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiEdit2, 
-  FiTrash2, 
   FiPlus, 
   FiX, 
-  FiCheck, 
   FiChevronDown, 
   FiChevronUp,
-  FiDownload,
   FiSearch
 } from 'react-icons/fi';
 import { ToastContainer, toast } from 'react-toastify';
@@ -24,13 +21,12 @@ const DataRekapitulasi = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [groupBy, setGroupBy] = useState('all'); // 'all', 'matkul', or 'tipe'
+  const [groupBy, setGroupBy] = useState('none'); // 'none', 'all', 'matkul', or 'tipe'
   const [sortOrder, setSortOrder] = useState('desc');
   const [expandedGroups, setExpandedGroups] = useState({});
   
   // Modal states
   const [editModal, setEditModal] = useState(false);
-  const [deleteModal, setDeleteModal] = useState(false);
   const [honorModal, setHonorModal] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
   
@@ -41,12 +37,7 @@ const DataRekapitulasi = () => {
   });
   
   const [formData, setFormData] = useState({
-    jumlah_hadir: '',
-    jumlah_izin: '',
-    jumlah_alpha: '',
-    jumlah_pengganti: '',
-    tipe_honor: '',
-    honor_pertemuan: ''
+    tipe_honor: ''
   });
 
   // Color mappings
@@ -235,7 +226,8 @@ const DataRekapitulasi = () => {
         } else if (groupBy === 'all') {
           key = `asisten-${item.asisten_id}`;
           label = `${item.asisten.nama} (${item.asisten.nim})`;
-        } else {
+        } else if (groupBy === 'none') {
+          // No grouping, handled separately
           return;
         }
         
@@ -288,7 +280,7 @@ const DataRekapitulasi = () => {
       const response = await axios.post(
         'http://localhost:8080/api/admin/rekapitulasi',
         {
-          asisten_id: parseInt(honorForm.asisten_id), // Pastikan asisten_id berupa number
+          asisten_id: parseInt(honorForm.asisten_id),
           tipe_honor: honorForm.tipe_honor
         },
         {
@@ -320,77 +312,39 @@ const DataRekapitulasi = () => {
     }
   };
 
-  // Handle rekapitulasi update
-  const submitUpdate = async () => {
-    try {
-      await axios.put(
-        `http://localhost:8080/api/admin/rekapitulasi/${currentItem.asisten_id}`,
-        {
-          asisten_id: currentItem.asisten_id,
-          jumlah_hadir: formData.jumlah_hadir,
-          jumlah_izin: formData.jumlah_izin,
-          jumlah_alpha: formData.jumlah_alpha,
-          jumlah_pengganti: formData.jumlah_pengganti,
-          tipe_honor: formData.tipe_honor
-        },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        }
-      );
+  // Handle rekapitulasi update (only honor type)
+const submitUpdate = async () => {
+  try {
+    await axios.put(
+      `http://localhost:8080/api/admin/rekapitulasi/${currentItem.asisten_id}`,
+      {
+        asisten_id: currentItem.asisten_id,
+        tipe_honor: formData.tipe_honor,
+        jumlah_hadir: currentItem.jumlah_hadir,
+        jumlah_izin: currentItem.jumlah_izin,
+        jumlah_alpha: currentItem.jumlah_alpha,
+        jumlah_pengganti: currentItem.jumlah_pengganti
+      },
+      {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      }
+    );
 
-      toast.success('Data rekapitulasi berhasil diperbarui');
-      setEditModal(false);
-      
-      // Refresh data
-      const [presensiResponse, rekapResponse] = await Promise.all([
-        axios.get('http://localhost:8080/api/admin/presensi', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        }),
-        axios.get('http://localhost:8080/api/admin/rekapitulasi', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
-      ]);
-      
-      setPresensiData(presensiResponse.data);
-      setRekapitulasiData(rekapResponse.data?.data || []);
-      
-    } catch (err) {
-      console.error('Error updating data:', err);
-      toast.error(err.response?.data?.message || 'Gagal memperbarui data rekapitulasi');
-    }
-  };
-
-  // Handle rekapitulasi deletion
-  const submitDelete = async () => {
-    try {
-      await axios.delete(
-        `http://localhost:8080/api/admin/rekapitulasi/${currentItem.id}`,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        }
-      );
-
-      toast.success('Data rekapitulasi berhasil dihapus');
-      setDeleteModal(false);
-      
-      // Refresh data
-      const [presensiResponse, rekapResponse] = await Promise.all([
-        axios.get('http://localhost:8080/api/admin/presensi', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        }),
-        axios.get('http://localhost:8080/api/admin/rekapitulasi', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
-      ]);
-      
-      setPresensiData(presensiResponse.data);
-      setRekapitulasiData(rekapResponse.data?.data || []);
-      
-    } catch (err) {
-      console.error('Error deleting data:', err);
-      toast.error(err.response?.data?.message || 'Gagal menghapus data rekapitulasi');
-    }
-  };
+    toast.success('Tipe honor berhasil diperbarui');
+    setEditModal(false);
+    
+    // Refresh data
+    const rekapResponse = await axios.get('http://localhost:8080/api/admin/rekapitulasi', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    
+    setRekapitulasiData(rekapResponse.data?.data || []);
+    
+  } catch (err) {
+    console.error('Error updating data:', err);
+    toast.error(err.response?.data?.message || 'Gagal memperbarui tipe honor');
+  }
+};
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -410,24 +364,15 @@ const DataRekapitulasi = () => {
     }));
   };
 
-  // Open edit modal
+  // Open edit modal (only when not grouped)
   const handleEdit = (item) => {
+    if (groupBy !== 'none') return;
+    
     setCurrentItem(item);
     setFormData({
-      jumlah_hadir: item.jumlah_hadir,
-      jumlah_izin: item.jumlah_izin,
-      jumlah_alpha: item.jumlah_alpha,
-      jumlah_pengganti: item.jumlah_pengganti,
-      tipe_honor: item.tipe_honor,
-      honor_pertemuan: item.honor_pertemuan
+      tipe_honor: item.tipe_honor || 'A'
     });
     setEditModal(true);
-  };
-
-  // Open delete modal
-  const handleDelete = (item) => {
-    setCurrentItem(item);
-    setDeleteModal(true);
   };
 
   if (loading) {
@@ -600,20 +545,12 @@ const DataRekapitulasi = () => {
                       Rp {item.total_honor.toLocaleString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="text-indigo-600 hover:text-indigo-900"
-                        >
-                          <FiEdit2 />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <FiTrash2 />
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleEdit(item)}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
+                        <FiEdit2 />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -668,7 +605,6 @@ const DataRekapitulasi = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alpha</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pengganti</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Honor</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -713,22 +649,6 @@ const DataRekapitulasi = () => {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
                                 Rp {item.total_honor.toLocaleString()}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div className="flex space-x-2">
-                                  <button
-                                    onClick={() => handleEdit(item)}
-                                    className="text-indigo-600 hover:text-indigo-900"
-                                  >
-                                    <FiEdit2 />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDelete(item)}
-                                    className="text-red-600 hover:text-red-900"
-                                  >
-                                    <FiTrash2 />
-                                  </button>
-                                </div>
                               </td>
                             </motion.tr>
                           ))}
@@ -791,9 +711,7 @@ const DataRekapitulasi = () => {
                             {groupBy !== 'tipe' && (
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe Honor</th>
                             )}
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Honor/Pertemuan</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Honor</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -855,27 +773,8 @@ const DataRekapitulasi = () => {
                                   </span>
                                 </td>
                               )}
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                Rp {item.honor_pertemuan.toLocaleString()}
-                              </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
                                 Rp {item.total_honor.toLocaleString()}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div className="flex space-x-2">
-                                  <button
-                                    onClick={() => handleEdit(item)}
-                                    className="text-indigo-600 hover:text-indigo-900"
-                                  >
-                                    <FiEdit2 />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDelete(item)}
-                                    className="text-red-600 hover:text-red-900"
-                                  >
-                                    <FiTrash2 />
-                                  </button>
-                                </div>
                               </td>
                             </motion.tr>
                           ))}
@@ -975,7 +874,7 @@ const DataRekapitulasi = () => {
           </div>
         )}
 
-        {/* Edit Modal */}
+        {/* Edit Modal (only for honor type) */}
         {editModal && currentItem && (
           <div className="fixed inset-0 drop-shadow-2xl bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <motion.div 
@@ -985,7 +884,7 @@ const DataRekapitulasi = () => {
             >
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Edit Rekapitulasi</h2>
+                  <h2 className="text-xl font-semibold">Edit Tipe Honor</h2>
                   <button 
                     onClick={() => setEditModal(false)}
                     className="text-gray-500 hover:text-gray-700"
@@ -1003,67 +902,6 @@ const DataRekapitulasi = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Mata Kuliah</label>
-                    <p className="text-sm text-gray-900">
-                      {currentItem.mata_kuliah.nama} ({currentItem.mata_kuliah.kode})
-                    </p>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="jumlah_hadir" className="block text-sm font-medium text-gray-700 mb-1">Jumlah Hadir</label>
-                      <input
-                        type="number"
-                        id="jumlah_hadir"
-                        name="jumlah_hadir"
-                        value={formData.jumlah_hadir}
-                        onChange={handleInputChange}
-                        className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        min="0"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="jumlah_izin" className="block text-sm font-medium text-gray-700 mb-1">Jumlah Izin</label>
-                      <input
-                        type="number"
-                        id="jumlah_izin"
-                        name="jumlah_izin"
-                        value={formData.jumlah_izin}
-                        onChange={handleInputChange}
-                        className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        min="0"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="jumlah_alpha" className="block text-sm font-medium text-gray-700 mb-1">Jumlah Alpha</label>
-                      <input
-                        type="number"
-                        id="jumlah_alpha"
-                        name="jumlah_alpha"
-                        value={formData.jumlah_alpha}
-                        onChange={handleInputChange}
-                        className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        min="0"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="jumlah_pengganti" className="block text-sm font-medium text-gray-700 mb-1">Jumlah Pengganti</label>
-                      <input
-                        type="number"
-                        id="jumlah_pengganti"
-                        name="jumlah_pengganti"
-                        value={formData.jumlah_pengganti}
-                        onChange={handleInputChange}
-                        className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        min="0"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
                     <label htmlFor="tipe_honor" className="block text-sm font-medium text-gray-700 mb-1">Tipe Honor</label>
                     <select
                       id="tipe_honor"
@@ -1072,11 +910,11 @@ const DataRekapitulasi = () => {
                       onChange={handleInputChange}
                       className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="A">Tipe A</option>
-                      <option value="B">Tipe B</option>
-                      <option value="C">Tipe C</option>
-                      <option value="D">Tipe D</option>
-                      <option value="E">Tipe E</option>
+                      <option value="A">Tipe A (Rp 12,500)</option>
+                      <option value="B">Tipe B (Rp 14,500)</option>
+                      <option value="C">Tipe C (Rp 16,500)</option>
+                      <option value="D">Tipe D (Rp 22,500)</option>
+                      <option value="E">Tipe E (Rp 24,500)</option>
                     </select>
                   </div>
                 </div>
@@ -1093,48 +931,6 @@ const DataRekapitulasi = () => {
                     className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     Simpan Perubahan
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-
-        {/* Delete Confirmation Modal */}
-        {deleteModal && currentItem && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <motion.div 
-              className="bg-white rounded-lg w-full max-w-md"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-            >
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Konfirmasi Hapus</h2>
-                  <button 
-                    onClick={() => setDeleteModal(false)}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    <FiX size={24} />
-                  </button>
-                </div>
-                
-                <p className="mb-6">
-                  Apakah Anda yakin ingin menghapus rekapitulasi untuk asisten <strong>{currentItem.asisten.nama}</strong> di mata kuliah <strong>{currentItem.mata_kuliah.nama}</strong>?
-                </p>
-                
-                <div className="flex justify-end space-x-3">
-                  <button
-                    onClick={() => setDeleteModal(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    onClick={submitDelete}
-                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                  >
-                    Hapus
                   </button>
                 </div>
               </div>

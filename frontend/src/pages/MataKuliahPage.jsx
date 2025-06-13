@@ -737,7 +737,7 @@ function CourseDetailView({
                         ? "Login untuk Mendaftar"
                         : isFull(schedule.assistants)
                           ? "Kuota Penuh"
-                          : "Daftar Sebagai Asisten"}
+                          : "Ambil Jadwal"}
                     </button>
                   )}
                 </div>
