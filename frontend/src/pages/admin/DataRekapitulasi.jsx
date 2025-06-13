@@ -196,42 +196,83 @@ const DataRekapitulasi = () => {
   const groupedData = useMemo(() => {
     const grouped = {};
     
-    filteredData.forEach(item => {
-      let key, label;
-      
-      if (groupBy === 'matkul') {
-        // Group by mata kuliah
-        key = `matkul-${item.mata_kuliah.id}`;
-        label = item.mata_kuliah.nama;
-      } else if (groupBy === 'tipe') {
-        // Group by honor type
-        key = `tipe-${item.tipe_honor || 'none'}`;
-        label = `Tipe ${item.tipe_honor || 'Belum di-set'}`;
-      } else {
-        // No grouping - group by asisten (aggregate all matkul)
-        key = `asisten-${item.asisten_id}`;
-        label = `${item.asisten.nama} (${item.asisten.nim})`;
-      }
-      
-      if (!grouped[key]) {
-        grouped[key] = {
-          key,
-          label,
-          mata_kuliah: groupBy === 'matkul' ? item.mata_kuliah : null,
-          tipe_honor: groupBy === 'tipe' ? item.tipe_honor : null,
-          items: [],
-          totalHonor: 0,
-          totalAsisten: 0
-        };
-      }
-      
-      grouped[key].items.push(item);
-      grouped[key].totalHonor += item.total_honor || 0;
-      grouped[key].totalAsisten = groupBy === 'all' ? 1 : grouped[key].items.length;
-    });
+    if (groupBy === 'tipe') {
+      // Group purely by honor type from rekapitulasiData
+      rekapitulasiData.forEach(item => {
+        const tipeKey = item.tipe_honor || 'unset';
+        const label = `Tipe ${item.tipe_honor || 'Belum di-set'}`;
+        
+        if (!grouped[tipeKey]) {
+          grouped[tipeKey] = {
+            key: tipeKey,
+            label,
+            tipe_honor: item.tipe_honor,
+            items: [],
+            totalHonor: 0,
+            totalAsisten: 0,
+            honorPerMeeting: item.honor_pertemuan,
+            asistenList: []
+          };
+        }
+        
+        grouped[tipeKey].items.push(item);
+        grouped[tipeKey].totalHonor += item.total_honor || 0;
+        grouped[tipeKey].totalAsisten += 1;
+        grouped[tipeKey].asistenList.push({
+          id: item.asisten_id,
+          nama: item.asisten.nama,
+          nim: item.asisten.nim
+        });
+      });
+    } else {
+      // Original grouping logic for other cases
+      filteredData.forEach(item => {
+        let key, label;
+        
+        if (groupBy === 'matkul') {
+          key = `matkul-${item.mata_kuliah.id}`;
+          label = item.mata_kuliah.nama;
+        } else if (groupBy === 'all') {
+          key = `asisten-${item.asisten_id}`;
+          label = `${item.asisten.nama} (${item.asisten.nim})`;
+        } else {
+          return;
+        }
+        
+        if (!grouped[key]) {
+          grouped[key] = {
+            key,
+            label,
+            mata_kuliah: groupBy === 'matkul' ? item.mata_kuliah : null,
+            items: [],
+            totalHonor: 0,
+            totalAsisten: 0,
+            aggregatedCounts: {
+              hadir: 0,
+              izin: 0,
+              alpha: 0,
+              pengganti: 0
+            }
+          };
+        }
+        
+        grouped[key].items.push(item);
+        grouped[key].totalHonor += item.total_honor || 0;
+        
+        if (groupBy === 'all') {
+          grouped[key].totalAsisten = 1;
+          grouped[key].aggregatedCounts.hadir += item.jumlah_hadir;
+          grouped[key].aggregatedCounts.izin += item.jumlah_izin;
+          grouped[key].aggregatedCounts.alpha += item.jumlah_alpha;
+          grouped[key].aggregatedCounts.pengganti += item.jumlah_pengganti;
+        } else {
+          grouped[key].totalAsisten = grouped[key].items.length;
+        }
+      });
+    }
     
     return grouped;
-  }, [filteredData, groupBy]);
+  }, [filteredData, rekapitulasiData, groupBy]);
 
   // Toggle group expansion
   const toggleGroup = (key) => {
@@ -247,33 +288,35 @@ const DataRekapitulasi = () => {
       const response = await axios.post(
         'http://localhost:8080/api/admin/rekapitulasi',
         {
-          asisten_id: honorForm.asisten_id,
+          asisten_id: parseInt(honorForm.asisten_id), // Pastikan asisten_id berupa number
           tipe_honor: honorForm.tipe_honor
         },
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: { 
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
         }
       );
-
+  
       toast.success('Tipe honor berhasil diset');
       setHonorModal(false);
       
       // Refresh data
-      const [presensiResponse, rekapResponse] = await Promise.all([
-        axios.get('http://localhost:8080/api/admin/presensi', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        }),
-        axios.get('http://localhost:8080/api/admin/rekapitulasi', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
-      ]);
+      const rekapResponse = await axios.get('http://localhost:8080/api/admin/rekapitulasi', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       
-      setPresensiData(presensiResponse.data);
       setRekapitulasiData(rekapResponse.data?.data || []);
       
     } catch (err) {
       console.error('Error setting honor type:', err);
-      toast.error(err.response?.data?.message || 'Gagal menyet tipe honor');
+      if (err.response) {
+        console.error('Response data:', err.response.data);
+        toast.error(err.response.data?.error || 'Gagal menyet tipe honor');
+      } else {
+        toast.error('Gagal menyet tipe honor');
+      }
     }
   };
 
@@ -448,6 +491,7 @@ const DataRekapitulasi = () => {
                   value={groupBy}
                   onChange={(e) => setGroupBy(e.target.value)}
                 >
+                  <option value="none">Semua</option>
                   <option value="all">Per Asisten</option>
                   <option value="matkul">Per Mata Kuliah</option>
                   <option value="tipe">Per Tipe Honor</option>
@@ -491,7 +535,212 @@ const DataRekapitulasi = () => {
           )}
 
           <div className="overflow-x-auto">
-            {Object.values(groupedData).map(group => (
+          {groupBy === 'none' ? (
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asisten</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hadir</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Izin</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alpha</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pengganti</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe Honor</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Honor/Pertemuan</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Honor</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {rekapitulasiData.map((item, index) => (
+                  <tr key={`${item.asisten_id}-${index}`} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 font-medium">{item.asisten.nama.charAt(0)}</span>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{item.asisten.nama}</div>
+                          <div className="text-sm text-gray-500">{item.asisten.nim}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors.hadir}`}>
+                        {item.jumlah_hadir}x
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors.izin}`}>
+                        {item.jumlah_izin}x
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors.alpha}`}>
+                        {item.jumlah_alpha}x
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${jenisColors.pengganti}`}>
+                        {item.jumlah_pengganti}x
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        item.tipe_honor ? 
+                        tipeHonorColors[item.tipe_honor] || 'bg-gray-100 text-gray-800' : 
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {item.tipe_honor ? `Tipe ${item.tipe_honor}` : 'Belum di-set'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      Rp {item.honor_pertemuan.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                      Rp {item.total_honor.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
+                          <FiEdit2 />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <FiTrash2 />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ):groupBy === 'tipe' ? (
+            Object.values(groupedData).map(group => (
+              <div key={group.key} className="mb-6">
+                <div 
+                  onClick={() => toggleGroup(group.key)}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition"
+                >
+                  <div className="flex items-center gap-4">
+                    <h3 className="font-medium text-lg">
+                      <span className={`px-3 py-1 rounded-full ${
+                        group.tipe_honor ? 
+                        tipeHonorColors[group.tipe_honor] || 'bg-gray-100 text-gray-800' : 
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {group.label}
+                      </span>
+                    </h3>
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                      {group.totalAsisten} Asisten
+                    </span>
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                      Total Honor: Rp {group.totalHonor.toLocaleString()}
+                    </span>
+                    <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
+                      Honor/Pertemuan: Rp {group.honorPerMeeting?.toLocaleString() || '0'}
+                    </span>
+                  </div>
+                  {expandedGroups[group.key] ? <FiChevronUp /> : <FiChevronDown />}
+                </div>
+                
+                {/* Group Content */}
+                <AnimatePresence>
+                  {expandedGroups[group.key] && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="mt-2 overflow-hidden"
+                    >
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asisten</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hadir</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Izin</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alpha</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pengganti</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Honor</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {group.items.map((item, index) => (
+                            <motion.tr
+                              key={`${item.asisten_id}-${index}`}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ delay: index * 0.05 }}
+                              className="hover:bg-gray-50"
+                            >
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <span className="text-blue-600 font-medium">{item.asisten.nama.charAt(0)}</span>
+                                  </div>
+                                  <div className="ml-4">
+                                    <div className="text-sm font-medium text-gray-900">{item.asisten.nama}</div>
+                                    <div className="text-sm text-gray-500">{item.asisten.nim}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors.hadir}`}>
+                                  {item.jumlah_hadir}x
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors.izin}`}>
+                                  {item.jumlah_izin}x
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors.alpha}`}>
+                                  {item.jumlah_alpha}x
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${jenisColors.pengganti}`}>
+                                  {item.jumlah_pengganti}x
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                                Rp {item.total_honor.toLocaleString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div className="flex space-x-2">
+                                  <button
+                                    onClick={() => handleEdit(item)}
+                                    className="text-indigo-600 hover:text-indigo-900"
+                                  >
+                                    <FiEdit2 />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(item)}
+                                    className="text-red-600 hover:text-red-900"
+                                  >
+                                    <FiTrash2 />
+                                  </button>
+                                </div>
+                              </td>
+                            </motion.tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))
+          ):(
+            Object.values(groupedData).map(group => (
               <div key={group.key} className="mb-6">
                 <div 
                   onClick={() => toggleGroup(group.key)}
@@ -636,7 +885,8 @@ const DataRekapitulasi = () => {
                   )}
                 </AnimatePresence>
               </div>
-            ))}
+            ))
+          )}
           </div>
         </motion.div>
 
@@ -727,7 +977,7 @@ const DataRekapitulasi = () => {
 
         {/* Edit Modal */}
         {editModal && currentItem && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 drop-shadow-2xl bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <motion.div 
               className="bg-white rounded-lg w-full max-w-md"
               initial={{ opacity: 0, scale: 0.9 }}
