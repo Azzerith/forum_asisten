@@ -453,7 +453,7 @@ const RekapitulasiPage = () => {
             transition={{ delay: 0.1 * index }}
             className="mb-6 md:mb-8 bg-white rounded-xl shadow-md p-4 md:p-6"
           >
-            <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 md:mb-6 pb-2 border-b border-gray-100">
+            <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 md:mb-6 pb-2 border-gray-100">
               Statistik Presensi
             </h3>
             
@@ -485,7 +485,7 @@ const RekapitulasiPage = () => {
               const isExpanded = expandedGroups[group.key] !== false;
 
               return (
-                <div key={group.key} className="border-b">
+                <div key={group.key}>
                   <div 
                     className="text-black flex justify-between items-center p-3 md:p-4 bg-gray-200 cursor-pointer hover:bg-gray-400"
                     onClick={() => toggleGroup(group.key)}

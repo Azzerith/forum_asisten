@@ -1,31 +1,14 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FiArrowUpRight, FiTrendingUp, FiClock, FiBell, FiUsers } from "react-icons/fi";
 import Layout from "../components/Layout";
+import axios from "axios";
 
 export default function HomePage() {
-  const announcements = [
-    {
-      title: "Ada Jadwal Asisten!",
-      description: "Pengantar Ilmu Komputer",
-      icon: <FiClock className="text-xl" />,
-      color: "bg-blue-100 text-blue-600"
-    },
-    {
-      title: "Pengumuman!",
-      description: "Diberitahukan kepada seluruh asisten mata kuliah Pemrograman...",
-      icon: <FiBell className="text-xl" />,
-      color: "bg-purple-100 text-purple-600"
-    },
-    {
-      title: "Meeting Rutin",
-      description: "Akan diadakan meeting rutin hari Jumat pukul 16.00",
-      icon: <FiUsers className="text-xl" />,
-      color: "bg-indigo-100 text-indigo-600"
-    }
-  ];
-
-  const recentActivities = [
+  const [announcements, setAnnouncements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [recentActivities, setRecentActivities] = useState([
     {
       title: "Pembaruan terbaru pada modul praktikum",
       time: "2 jam yang lalu"
@@ -38,7 +21,150 @@ export default function HomePage() {
       title: "Materi tambahan telah diupload",
       time: "3 hari yang lalu"
     }
-  ];
+  ]);
+
+  // Get user from token
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        setUser({ user_id: payload.user_id, ...payload });
+      } catch (err) {
+        console.error("Token parsing error:", err);
+      }
+    }
+  }, []);
+
+  // Check if schedule is within time range
+  const isWithinTimeRange = (schedule, minutesBefore = 0, minutesAfter = 0) => {
+    const today = new Date();
+    const currentDay = today.toLocaleDateString("id-ID", { weekday: "long" }).toLowerCase();
+    const currentTime = today.getHours() * 60 + today.getMinutes();
+    
+    const scheduleDay = schedule.jadwal?.hari?.toLowerCase() || schedule.hari?.toLowerCase();
+    if (scheduleDay !== currentDay) return false;
+    
+    const [startHour, startMinute] = (schedule.jadwal?.jam_mulai || schedule.jam_mulai).split(':').map(Number);
+    const [endHour, endMinute] = (schedule.jadwal?.jam_selesai || schedule.jam_selesai).split(':').map(Number);
+    
+    const scheduleStart = startHour * 60 + startMinute;
+    const scheduleEnd = endHour * 60 + endMinute;
+    
+    return (currentTime >= (scheduleStart - minutesBefore)) && 
+           (currentTime <= (scheduleEnd + minutesAfter));
+  };
+
+  // Fetch user schedules
+  useEffect(() => {
+    if (!user?.user_id) return;
+
+    const fetchSchedules = async () => {
+      try {
+        const res = await axios.get("http://localhost:8080/api/asisten-kelas", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        const allSchedules = Array.isArray(res.data) ? res.data : [res.data];
+        const userSchedules = allSchedules.filter(
+          (item) => item.asisten_id === Number(user.user_id) || item.asisten?.id === Number(user.user_id)
+        );
+
+        const today = new Date();
+        const currentDay = today.toLocaleDateString("id-ID", { weekday: "long" }).toLowerCase();
+        
+        // Filter schedules for today
+        const todaySchedules = userSchedules.filter(schedule => {
+          const scheduleDay = schedule.jadwal?.hari?.toLowerCase() || schedule.hari?.toLowerCase();
+          return scheduleDay === currentDay;
+        });
+
+        // Generate announcements based on schedules
+        const newAnnouncements = [];
+        
+        todaySchedules.forEach(schedule => {
+          const matkul = schedule.jadwal?.mata_kuliah?.nama || schedule.mata_kuliah?.nama;
+          const kelas = schedule.jadwal?.kelas || schedule.kelas;
+          const startTime = schedule.jadwal?.jam_mulai || schedule.jam_mulai;
+          const endTime = schedule.jadwal?.jam_selesai || schedule.jam_selesai;
+          
+          // Check if presensi time is now (within 30 minutes before/after)
+          if (isWithinTimeRange(schedule, 30, 30)) {
+            newAnnouncements.push({
+              title: "Waktu Presensi!",
+              description: `Segera lakukan presensi untuk ${matkul} - ${kelas}`,
+              icon: <FiClock className="text-xl" />,
+              color: "bg-blue-100 text-blue-600",
+              urgent: true
+            });
+          }
+          
+          // Check if presensi time is within 1 hour
+          if (isWithinTimeRange(schedule, 60, 0)) {
+            newAnnouncements.push({
+              title: "Pengingat Presensi",
+              description: `Presensi untuk ${matkul} - ${kelas} akan dimulai pukul ${startTime}`,
+              icon: <FiBell className="text-xl" />,
+              color: "bg-orange-100 text-orange-600"
+            });
+          }
+        });
+
+        // Add default announcements if no schedule-based announcements
+        if (newAnnouncements.length === 0) {
+          newAnnouncements.push(
+            {
+              title: "Rapat Koordinator",
+              description: "Akan diadakan rapat koor rutin 3 minggu sekali pada Hari Jumat pukul 10.00",
+              icon: <FiUsers className="text-xl" />,
+              color: "bg-indigo-100 text-indigo-600"
+            },
+            {
+              title: "Pengumuman!",
+              description: "1. Ambil jadwal terlebih dahulu sesuai ketentuan Forum Asisten. 2. Selalu pastikan anda telah presensi sesuai jadwal yang anda ambil. 3. Cek secara berkala hasil rekapitulasi",
+              icon: <FiBell className="text-xl" />,
+              color: "bg-purple-100 text-purple-600"
+            }
+          );
+        }
+
+        setAnnouncements(newAnnouncements);
+      } catch (err) {
+        console.error("Failed to fetch schedules", err);
+        // Fallback to default announcements
+        setAnnouncements([
+          {
+            title: "Meeting Rutin",
+            description: "Akan diadakan meeting rutin hari Jumat pukul 16.00",
+            icon: <FiUsers className="text-xl" />,
+            color: "bg-indigo-100 text-indigo-600"
+          },
+          {
+            title: "Pengumuman!",
+            description: "Diberitahukan kepada seluruh asisten mata kuliah Pemrograman...",
+            icon: <FiBell className="text-xl" />,
+            color: "bg-purple-100 text-purple-600"
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSchedules();
+  }, [user?.user_id]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -61,12 +187,12 @@ export default function HomePage() {
         
         {/* Announcements Grid */}
         <section className="mb-8 sm:mb-10">
-          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">Pengumuman</h2>
+          {/* <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">Pengumuman & Notifikasi</h2> */}
           <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {announcements.map((item, index) => (
               <motion.article
                 key={index}
-                className={`bg-gradient-to-r from-blue-700 to-indigo-900 text-white p-5 rounded-xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden ${index === announcements.length - 1 ? 'sm:col-span-2 lg:col-span-1' : ''}`}
+                className={`bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-5 rounded-xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden`}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 + index * 0.1, duration: 0.3 }}
@@ -77,14 +203,16 @@ export default function HomePage() {
                   <h2 className="text-lg font-semibold">{item.title}</h2>
                 </div>
                 <p className="text-xs md:text-sm opacity-90 mb-4">{item.description}</p>
-                <motion.button
-                  className="flex items-center gap-1 text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full transition-colors"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Lihat Detail <FiArrowUpRight className="text-xs" />
-                </motion.button>
-                
+                {item.urgent && (
+                  <motion.button
+                    className="flex items-center gap-1 text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => window.location.href = '/presensi'}
+                  >
+                    Presensi Sekarang <FiArrowUpRight className="text-xs" />
+                  </motion.button>
+                )}
               </motion.article>
             ))}
           </div>
@@ -97,7 +225,7 @@ export default function HomePage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <div className="p-5 sm:p-6 border-b">
+          <div className="p-5 sm:p-6">
             <div className="flex items-center gap-3">
               <FiTrendingUp className="text-blue-600 text-xl" />
               <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Aktivitas Terkini</h3>

@@ -364,7 +364,7 @@ const showSuccess = (message) => {
                 const isExpanded = expandedGroups[key] !== false; // Default expanded
                 
                 return (
-                  <div key={key} className="border-b">
+                  <div key={key}>
                     <div 
                       className="text-black flex justify-between items-center p-4 bg-gray-200 cursor-pointer hover:bg-gray-400"
                       onClick={() => toggleGroup(programStudi, semester)}
@@ -460,7 +460,7 @@ const showSuccess = (message) => {
         {showModal && (
           <div className="fixed inset-0 drop-shadow-2xl bg-opacity-30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-white text-black rounded-lg shadow-xl w-full max-w-md">
-              <div className="flex justify-between items-center border-b px-6 py-4">
+              <div className="flex justify-between items-center  px-6 py-4">
                 <h3 className="text-lg font-medium text-gray-900">
                   {editMode ? "Edit Jadwal" : "Tambah Jadwal"}
                 </h3>

@@ -323,7 +323,7 @@ const fetchAvailableAssistants = async () => {
       <Layout>
         <main className="flex-1 p-6 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500 mx-auto"></div>
             <p className="mt-4 text-gray-600">Memuat data jadwal...</p>
           </div>
         </main>
@@ -426,7 +426,7 @@ const fetchAvailableAssistants = async () => {
                   const isExpanded = expandedGroups[key] !== false; // Default expanded
                   
                   return (
-                    <div key={key} className="border-b">
+                    <div key={key}>
                       <div 
                         className="text-black flex justify-between items-center p-4 bg-gray-200 cursor-pointer hover:bg-gray-400"
                         onClick={() => toggleGroup(programStudi, semester)}
@@ -538,7 +538,7 @@ const fetchAvailableAssistants = async () => {
         {showModal && (
           <div className="fixed inset-0 drop-shadow-2xl bg-opacity-30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-              <div className="flex justify-between items-center border-b px-6 py-4">
+              <div className="flex justify-between items-center  px-6 py-4">
                 <h3 className="text-lg font-medium text-gray-900">
                   {currentSchedule ? "Tambah Asisten ke Jadwal" : "Ploting Jadwal Asisten"}
                 </h3>

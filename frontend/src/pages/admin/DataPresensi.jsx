@@ -245,7 +245,7 @@ export default function DataPresensi() {
       <Layout>
         <main className="flex-1 p-6 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500 mx-auto"></div>
             <p className="mt-4 text-gray-600">Memuat data...</p>
           </div>
         </main>
@@ -333,7 +333,7 @@ export default function DataPresensi() {
             const isExpanded = expandedGroups[group.key] !== false;
 
             return (
-              <div key={group.key} className="border-b">
+              <div key={group.key}>
                 <div 
                   className="text-black flex justify-between items-center p-4 bg-gray-200 cursor-pointer hover:bg-gray-400"
                   onClick={() => toggleGroup(group.key)}
@@ -490,7 +490,7 @@ export default function DataPresensi() {
         {showModal && currentPresensi && (
           <div className="fixed inset-0 drop-shadow-2xl bg-opacity-30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-white text-black rounded-lg shadow-xl w-full max-w-2xl">
-              <div className="flex justify-between items-center border-b px-6 py-4">
+              <div className="flex justify-between items-center  px-6 py-4">
                 <h3 className="text-lg font-medium text-gray-900">
                   Detail Presensi Asisten
                 </h3>

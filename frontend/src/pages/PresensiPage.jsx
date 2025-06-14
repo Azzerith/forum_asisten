@@ -361,20 +361,10 @@ export default function PresensiPage() {
 
   return (
     <Layout>
-      {/* Success and Error Modals */}
       {showSuccessModal && <SuccessModal />}
       {showErrorModal && <ErrorModal />}
 
       <main className="flex-1 p-6">
-        {/* <motion.h1
-          className="text-3xl font-bold text-blue-900 mb-8"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          Presensi Asisten
-        </motion.h1> */}
-
         {/* Tombol Presensi Lain */}
         <motion.button
           onClick={() => {
