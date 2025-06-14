@@ -27,7 +27,7 @@ export default function Layout({ children }) {
   const isAdmin = userRole === 'admin';
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen min-w-screen bg-gray-50">
       {isAdmin ? (
         <AdminSidebar 
           isOpen={sidebarOpen} 

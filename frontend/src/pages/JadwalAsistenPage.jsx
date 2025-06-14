@@ -3,6 +3,7 @@ import axios from "axios";
 import Layout from "../components/Layout";
 import { FiX, FiClock, FiCalendar, FiBook, FiUser, FiHome, FiAlertCircle, FiUsers } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 export default function JadwalAsistenPage() {
   const [schedules, setSchedules] = useState([]);
@@ -195,7 +196,12 @@ export default function JadwalAsistenPage() {
 
   return (
     <Layout>
-      <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
+      <motion.main 
+        className="flex-1 p-4 sm:p-6 overflow-x-hidden max-w-7xl mx-auto"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         {/* <div className="mb-4 md:mb-6 flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-gray-800">Jadwal Saya</h1>
@@ -306,7 +312,7 @@ export default function JadwalAsistenPage() {
             </div>
           </div>
         )}
-      </main>
+      </motion.main>
     </Layout>
   );
 }

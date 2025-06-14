@@ -14,6 +14,14 @@ const RekapitulasiPage = () => {
   const [sortOrder, setSortOrder] = useState('desc');
   const [showModal, setShowModal] = useState(false);
   const [currentPresensi, setCurrentPresensi] = useState(null);
+  const tableHeaders = [
+    { name: 'Mata Kuliah', mobileName: 'Matkul', class: 'px-1 py-1 max-w-[90px] sm:max-w-[150px]' },
+    { name: 'Hari/Jam', mobileName: 'Hari/Jam', class: 'px-1 py-1 max-w-[70px] sm:max-w-[120px]' },
+    { name: 'Kelas/Lab', mobileName: 'Kls/Lab', class: 'px-1 py-1 max-w-[50px] sm:max-w-[80px]' },
+    { name: 'Status', mobileName: 'Sts', class: 'px-1 py-1' },
+    { name: 'Tanggal', mobileName: 'Tgl', class: 'px-1 py-1' },
+    { name: 'Aksi', mobileName: 'Act', class: 'px-1 py-1' }
+  ];
   
   // Get user data from localStorage
   const user = JSON.parse(localStorage.getItem('user'));
@@ -209,174 +217,203 @@ const RekapitulasiPage = () => {
 
   // Mobile-friendly stats grid
   const StatsGrid = ({ rekapitulasiData }) => (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
       {rekapitulasiData.map((item) => (
         <React.Fragment key={item.id}>
-          <div className="bg-green-50 p-2 sm:p-3 rounded-lg border border-green-100">
+          <div className="bg-green-50 p-2 rounded-lg border border-green-100 sm:p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-green-600">Hadir</p>
-                <p className="text-sm sm:text-base font-bold text-green-700">{item.jumlah_hadir}</p>
+                <p className="text-xs font-bold text-green-700 sm:text-sm">{item.jumlah_hadir}</p>
               </div>
               <div className="p-1 bg-green-100 rounded-full text-green-600">
-                <FiCheck className="w-3 h-3 sm:w-4 sm:h-4" />
+                <FiCheck className="w-3 h-3" />
               </div>
             </div>
           </div>
           
-          {/* Repeat similar structure for other stats */}
-          <div className="bg-yellow-50 p-2 sm:p-3 rounded-lg border border-yellow-100">
+          <div className="bg-yellow-50 p-2 rounded-lg border border-yellow-100 sm:p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-yellow-600">Izin</p>
-                <p className="text-sm sm:text-base font-bold text-yellow-700">{item.jumlah_izin}</p>
+                <p className="text-xs font-bold text-yellow-700 sm:text-sm">{item.jumlah_izin}</p>
               </div>
               <div className="p-1 bg-yellow-100 rounded-full text-yellow-600">
-                <FiClock className="w-3 h-3 sm:w-4 sm:h-4" />
+                <FiClock className="w-3 h-3" />
               </div>
             </div>
           </div>
           
-          <div className="bg-red-50 p-2 sm:p-3 rounded-lg border border-red-100">
+          <div className="bg-red-50 p-2 rounded-lg border border-red-100 sm:p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-red-600">Alpha</p>
-                <p className="text-sm sm:text-base font-bold text-red-700">{item.jumlah_alpha}</p>
+                <p className="text-xs font-bold text-red-700 sm:text-sm">{item.jumlah_alpha}</p>
               </div>
               <div className="p-1 bg-red-100 rounded-full text-red-600">
-                <FiX className="w-3 h-3 sm:w-4 sm:h-4" />
+                <FiX className="w-3 h-3" />
               </div>
             </div>
           </div>
           
-          <div className="bg-purple-50 p-2 sm:p-3 rounded-lg border border-purple-100">
+          <div className="bg-purple-50 p-2 rounded-lg border border-purple-100 sm:p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-purple-600">Pengganti</p>
-                <p className="text-sm sm:text-base font-bold text-purple-700">{item.jumlah_pengganti}</p>
+                <p className="text-xs font-bold text-purple-700 sm:text-sm">{item.jumlah_pengganti}</p>
               </div>
               <div className="p-1 bg-purple-100 rounded-full text-purple-600">
-                <FiUser className="w-3 h-3 sm:w-4 sm:h-4" />
+                <FiUser className="w-3 h-3" />
               </div>
             </div>
           </div>
 
-          <div className="bg-blue-50 p-2 sm:p-3 rounded-lg border border-blue-100">
+          <div className="bg-blue-50 p-2 rounded-lg border border-blue-100 sm:p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-blue-600">Honor/Pertemuan</p>
-                <p className="text-sm sm:text-base font-bold text-blue-700">Rp {item.honor_pertemuan.toLocaleString()}</p>
+                <p className="text-xs font-bold text-blue-700 sm:text-sm">Rp {item.honor_pertemuan.toLocaleString()}</p>
               </div>
               <div className="p-1 bg-blue-100 rounded-full text-blue-600">
-                <FiDollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
+                <FiDollarSign className="w-3 h-3" />
               </div>
             </div>
           </div>
 
-          <div className="bg-indigo-50 p-2 sm:p-3 rounded-lg border border-indigo-100">
+          <div className="bg-indigo-50 p-2 rounded-lg border border-indigo-100 sm:p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-indigo-600">Total Honor</p>
-                <p className="text-sm sm:text-base font-bold text-indigo-700">Rp {item.total_honor.toLocaleString()}</p>
+                <p className="text-xs font-bold text-indigo-700 sm:text-sm">Rp {item.total_honor.toLocaleString()}</p>
               </div>
               <div className="p-1 bg-indigo-100 rounded-full text-indigo-600">
-                <FiDollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
+                <FiDollarSign className="w-3 h-3" />
               </div>
             </div>
           </div>
         </React.Fragment>
       ))}
     </div>
-  );;
-
-  // Mobile-friendly search and filter controls
-  const SearchAndFilterControls = () => (
-    <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:space-x-2">
-      <div className="relative flex-1 min-w-0">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <FiSearch className="text-gray-400" />
-        </div>
-        <input
-          type="text"
-          placeholder="Cari..."
-          className="text-xs sm:text-sm pl-8 pr-3 py-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-1 focus:ring-blue-500"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-      <select
-        className="text-xs sm:text-sm text-gray-700 border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        value={groupBy}
-        onChange={(e) => setGroupBy(e.target.value)}
-      >
-        <option value="date">By Tanggal</option>
-        <option value="matkul">By Matkul</option>
-      </select>
-      <select
-        className="text-xs sm:text-sm text-gray-700 border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        value={sortOrder}
-        onChange={(e) => setSortOrder(e.target.value)}
-      >
-        <option value="desc">Terbaru</option>
-        <option value="asc">Terlama</option>
-      </select>
-    </div>
   );
 
-  // Mobile-friendly table row
   const PresensiTableRow = ({ item }) => (
-    <tr key={item.id} className="hover:bg-gray-50">
-      <td className="px-2 py-3">
-        <div className="flex items-center min-w-0">
-          <div className="flex-shrink-0 h-6 w-6 sm:h-8 sm:w-8 bg-purple-100 rounded-full flex items-center justify-center">
-            <FiBook className="text-purple-600 text-xs sm:text-sm" />
-          </div>
-          <div className="ml-2 overflow-hidden">
-            <div className="text-xs font-medium text-gray-900 truncate">
-              {item.jadwal?.mata_kuliah?.nama || 'N/A'}
+    <tr key={item.id} className="hover:bg-gray-50 text-xs sm:text-sm">
+      {/* Mata Kuliah */}
+      <td className="px-2 py-2 max-w-[120px] sm:max-w-[200px] truncate">
+        <div className="flex items-center">
+          <FiBook className="flex-shrink-0 text-purple-600 mr-1 sm:mr-2 text-xs sm:text-sm" />
+          <div>
+            <div className="font-medium">
+              <span className="hidden sm:inline">{item.jadwal?.mata_kuliah?.nama || 'N/A'}</span>
+              <span className="sm:hidden">
+                {item.jadwal?.mata_kuliah?.nama 
+                  ? item.jadwal.mata_kuliah.nama.split(' ')[0] + (item.jadwal.mata_kuliah.nama.split(' ').length > 1 ? '...' : '')
+                  : 'N/A'}
+              </span>
             </div>
-            <div className="text-2xs text-gray-500 truncate">
-              {item.jenis}
-            </div>
-          </div>
-        </div>
-      </td>
-      <td className="px-2 py-3">
-        <div className="flex items-center min-w-0">
-          <FiCalendar className="text-gray-400 mr-1 text-xs sm:text-sm" />
-          <div className="overflow-hidden">
-            <div className="text-xs font-medium text-gray-900 truncate">
-              {item.jadwal?.hari}
-            </div>
-            <div className="text-2xs text-gray-500 flex items-center truncate">
-              <FiClock className="mr-0.5" />
-              {item.jadwal?.jam_mulai} - {item.jadwal?.jam_selesai}
+            <div className="text-gray-500">
+              <span className="hidden sm:inline">{item.jenis}</span>
+              <span className="sm:hidden">{item.jenis?.charAt(0)}</span>
             </div>
           </div>
         </div>
       </td>
-      <td className="px-2 py-3">
-        <div className="text-xs text-gray-900 truncate">{item.jadwal?.kelas}</div>
-        <div className="text-2xs text-gray-500 truncate">{item.jadwal?.lab}</div>
+  
+      {/* Hari/Jam */}
+      <td className="px-2 py-2 max-w-[100px] sm:max-w-[150px]">
+        <div>
+          <div className="font-medium">
+            <span className="hidden sm:inline">{item.jadwal?.hari}</span>
+            <span className="sm:hidden">{item.jadwal?.hari?.substring(0, 3)}</span>
+          </div>
+          <div className="flex items-center text-gray-500">
+            <FiClock className="mr-1" />
+            <span className="hidden sm:inline">{item.jadwal?.jam_mulai} - {item.jadwal?.jam_selesai}</span>
+            <span className="sm:hidden">{item.jadwal?.jam_mulai?.replace(':00', '')}</span>
+          </div>
+        </div>
       </td>
-      <td className="px-2 py-3">
-        <span className={`px-1.5 py-0.5 text-2xs sm:text-xs font-semibold rounded-full ${statusColors[item.status] || 'bg-gray-100 text-gray-800'}`}>
-          {item.status}
+  
+      {/* Kelas/Lab */}
+      <td className="px-2 py-2 max-w-[80px] sm:max-w-[120px]">
+        <div>
+          <span className="hidden sm:inline">{item.jadwal?.kelas}</span>
+          <span className="sm:hidden">{item.jadwal?.kelas?.replace('Kelas ', 'Kl.')}</span>
+        </div>
+        <div className="text-gray-500">
+          <span className="hidden sm:inline">{item.jadwal?.lab}</span>
+          <span className="sm:hidden">{item.jadwal?.lab?.split(' ').map(w => w[0]).join('')}</span>
+        </div>
+      </td>
+  
+      {/* Status */}
+      <td className="px-2 py-2">
+        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusColors[item.status] || 'bg-gray-100 text-gray-800'}`}>
+          <span className="hidden sm:inline">{item.status}</span>
+          <span className="sm:hidden">
+            {item.status === 'hadir' ? 'H' : 
+             item.status === 'izin' ? 'I' : 
+             item.status === 'alpha' ? 'A' : item.status?.charAt(0)}
+          </span>
         </span>
       </td>
-      <td className="px-2 py-3 whitespace-nowrap text-2xs sm:text-xs text-gray-500">
-        {new Date(item.waktu_input).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+  
+      {/* Tanggal */}
+      <td className="px-2 py-2 whitespace-nowrap">
+        <div className="text-gray-700">
+          {new Date(item.waktu_input).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+        </div>
+        <div className="text-gray-500 sm:hidden text-xs">
+          {new Date(item.waktu_input).toLocaleDateString('id-ID', { year: '2-digit' })}
+        </div>
       </td>
-      <td className="px-2 py-3 whitespace-nowrap text-xs font-medium">
+  
+      {/* Aksi */}
+      <td className="px-2 py-2">
         <button
           onClick={() => openDetailModal(item)}
-          className="text-blue-600 hover:text-blue-900 flex items-center"
+          className="text-blue-600 hover:text-blue-900 flex items-center justify-center sm:justify-start"
         >
-          <FiEye className="sm:mr-1" />
+          <FiEye className="mr-0 sm:mr-1" />
           <span className="hidden sm:inline">Detail</span>
         </button>
       </td>
     </tr>
+  );
+
+  const SearchAndFilterControls = () => (
+    <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:space-x-2 w-full">
+      <div className="relative flex-1 min-w-0">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <FiSearch className="text-gray-400 text-sm" />
+        </div>
+        <input
+          type="text"
+          placeholder="Cari..."
+          className="text-xs pl-8 pr-2 py-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-1 focus:ring-blue-500"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:space-x-2">
+        <select
+          className="text-xs text-gray-700 border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          value={groupBy}
+          onChange={(e) => setGroupBy(e.target.value)}
+        >
+          <option value="date">Tanggal</option>
+          <option value="matkul">Matkul</option>
+        </select>
+        <select
+          className="text-xs text-gray-700 border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+        >
+          <option value="desc">Terbaru</option>
+          <option value="asc">Terlama</option>
+        </select>
+      </div>
+    </div>
   );
 
   if (loading || !dataLoaded) {
@@ -392,7 +429,12 @@ const RekapitulasiPage = () => {
 
   return (
     <Layout>
-      <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
+      <motion.main 
+        className="flex-1 p-4 sm:p-6 overflow-x-hidden max-w-7xl mx-auto"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         {/* <motion.h1 
           className="text-2xl md:text-3xl font-bold text-blue-900 mb-4 md:mb-8"
           initial={{ opacity: 0, y: -20 }}
@@ -474,25 +516,25 @@ const RekapitulasiPage = () => {
                   </div>
                   
                   {isExpanded && (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">Mata Kuliah</th>
-                            <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">Hari/Jam</th>
-                            <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">Kelas/Lab</th>
-                            <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
-                            <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {group.items.map((item) => (
-                            <PresensiTableRow key={item.id} item={item} />
+                    <div className="overflow-x-auto text-xs">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                        {tableHeaders.map((header) => (
+                            <th key={header.name} className={`${header.class} text-left text-[0.6rem] sm:text-xs font-medium text-gray-500 uppercase tracking-wider`}>
+                              <span className="hidden sm:inline">{header.name}</span>
+                              <span className="sm:hidden">{header.mobileName}</span>
+                            </th>
                           ))}
-                        </tbody>
-                      </table>
-                    </div>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {group.items.map((item) => (
+                          <PresensiTableRow key={item.id} item={item} />
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   )}
                 </div>
               );
@@ -632,7 +674,7 @@ const RekapitulasiPage = () => {
             </div>
           </div>
         )}
-      </main>
+      </motion.main>
     </Layout>
   );
 };
