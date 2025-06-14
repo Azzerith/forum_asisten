@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import SidebarMenu from "../components/Sidebar";
+import Layout from "../components/Layout";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FiBook, FiChevronLeft, FiChevronDown, FiChevronUp, 
@@ -319,15 +319,14 @@ export default function MataKuliahPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen min-w-screen bg-gray-50">
-        <SidebarMenu />
+      <Layout>
         <main className="flex-1 p-6 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
             <p className="mt-4 text-gray-600">Memuat data jadwal...</p>
           </div>
         </main>
-      </div>
+      </Layout>
     );
   }
 
@@ -351,8 +350,7 @@ export default function MataKuliahPage() {
   }
 
   return (
-    <div className="flex min-h-screen min-w-screen bg-gray-50">
-      <SidebarMenu />
+    <Layout>
       <main className="flex-1 p-6">
         <AnimatePresence>
           {!selectedProgram ? (
@@ -443,7 +441,7 @@ export default function MataKuliahPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </Layout>
   );
 }
 

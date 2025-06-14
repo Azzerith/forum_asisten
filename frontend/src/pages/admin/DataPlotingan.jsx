@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import SidebarMenu from "../../components/AdminSidebar";
+import Layout from "../../components/Layout";
 import { 
   FiClock, 
   FiCalendar, 
@@ -320,22 +320,20 @@ const fetchAvailableAssistants = async () => {
 
   if (loading && schedules.length === 0) {
     return (
-      <div className="flex min-h-screen min-w-screen bg-gray-50">
-        <SidebarMenu />
+      <Layout>
         <main className="flex-1 p-6 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
             <p className="mt-4 text-gray-600">Memuat data jadwal...</p>
           </div>
         </main>
-      </div>
+      </Layout>
     );
   }
 
   if (error && schedules.length === 0) {
     return (
-      <div className="flex min-h-screen min-w-screen bg-gray-50">
-        <SidebarMenu />
+      <Layout>
         <main className="flex-1 p-6 flex items-center justify-center">
           <div className="text-center text-red-500">
             <p>Gagal memuat data: {error}</p>
@@ -347,13 +345,12 @@ const fetchAvailableAssistants = async () => {
             </button>
           </div>
         </main>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="flex min-h-screen min-w-screen bg-gray-50">
-      <SidebarMenu />
+    <Layout>
       <main className="flex-1 p-6">
         <div className="mb-6 flex justify-between items-center">
           <div>
@@ -617,6 +614,6 @@ const fetchAvailableAssistants = async () => {
           </div>
         )}
       </main>
-    </div>
+    </Layout>
   );
 }

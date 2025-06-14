@@ -19,6 +19,7 @@ import DataPlotingan from './pages/admin/DataPlotingan'
 import DataPresensi from './pages/admin/DataPresensi'
 import DataRekapitulasi from './pages/admin/DataRekapitulasi'
 
+
 const router = createBrowserRouter([
   { path: '/', element: <LoginPage /> },
   { path: '/home', element: <HomePage /> },

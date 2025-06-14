@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import SidebarMenu from "../components/Sidebar";
-import { FiClock, FiCalendar, FiBook, FiUser, FiHome, FiAlertCircle, FiUsers } from "react-icons/fi";
+import Layout from "../components/Layout";
+import { FiX, FiClock, FiCalendar, FiBook, FiUser, FiHome, FiAlertCircle, FiUsers } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
 export default function JadwalAsistenPage() {
@@ -11,6 +11,7 @@ export default function JadwalAsistenPage() {
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+
 
   // Get user from token
   useEffect(() => {
@@ -162,22 +163,20 @@ export default function JadwalAsistenPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-gray-50">
-        <SidebarMenu />
+      <Layout>
         <main className="flex-1 p-4 md:p-6 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
             <p className="mt-4 text-gray-600">Memuat data jadwal...</p>
           </div>
         </main>
-      </div>
+      </Layout>
     );
   }
 
   if (error) {
     return (
-      <div className="flex min-h-screen bg-gray-50">
-        <SidebarMenu />
+      <Layout>
         <main className="flex-1 p-4 md:p-6 flex items-center justify-center">
           <div className="text-center text-red-500 max-w-md">
             <FiAlertCircle className="mx-auto h-12 w-12 mb-4" />
@@ -190,20 +189,19 @@ export default function JadwalAsistenPage() {
             </button>
           </div>
         </main>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <SidebarMenu />
+    <Layout>
       <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
-        <div className="mb-4 md:mb-6 flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
+        {/* <div className="mb-4 md:mb-6 flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-gray-800">Jadwal Saya</h1>
             <p className="text-xs md:text-sm text-gray-600">Daftar jadwal yang Anda ambil sebagai asisten</p>
           </div>
-        </div>
+        </div> */}
 
         {schedules.length === 0 ? (
           <div className="bg-white p-6 rounded-xl shadow-sm text-center">
@@ -309,6 +307,6 @@ export default function JadwalAsistenPage() {
           </div>
         )}
       </main>
-    </div>
+    </Layout>
   );
 }

@@ -1,7 +1,6 @@
 import React from "react";
-import SidebarMenu from "../../components/Sidebar";
 import { motion } from "framer-motion";
-import AdminSidebar from "../../components/AdminSidebar";
+import Layout from "../../components/Layout";
 
 export default function AdminHomePage() {
   // Data statistik
@@ -57,8 +56,7 @@ export default function AdminHomePage() {
   ];
 
   return (
-    <div className="flex min-h-screen min-w-screen bg-gray-50">
-      <AdminSidebar />
+    <Layout>
       <main className="flex-1 p-6">
         <motion.h1 
           className="text-3xl font-bold text-blue-900 mb-8"
@@ -217,6 +215,6 @@ export default function AdminHomePage() {
           </div>
         </motion.div>
       </main>
-    </div>
+    </Layout>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import SidebarMenu from "../components/Sidebar";
+import Layout from "../components/Layout";
 import { FiCheckCircle, FiPaperclip, FiPlus, FiSearch, FiX } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -348,34 +348,32 @@ export default function PresensiPage() {
   // UI saat loading
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-gray-50">
-        <SidebarMenu />
+      <Layout>
         <main className="flex-1 p-6 flex justify-center items-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
             <p className="mt-4 text-gray-600">Memuat data presensi...</p>
           </div>
         </main>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="flex min-h-screen min-w-screen bg-gray-50">
+    <Layout>
       {/* Success and Error Modals */}
       {showSuccessModal && <SuccessModal />}
       {showErrorModal && <ErrorModal />}
 
-      <SidebarMenu />
       <main className="flex-1 p-6">
-        <motion.h1
+        {/* <motion.h1
           className="text-3xl font-bold text-blue-900 mb-8"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
           Presensi Asisten
-        </motion.h1>
+        </motion.h1> */}
 
         {/* Tombol Presensi Lain */}
         <motion.button
@@ -790,6 +788,6 @@ export default function PresensiPage() {
           </motion.div>
         )}
       </main>
-    </div>
+    </Layout>
   );
 }

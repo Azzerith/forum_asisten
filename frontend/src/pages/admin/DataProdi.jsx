@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import AdminSidebar from "../../components/AdminSidebar";
+import Layout from "../../components/Layout";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiLoader, FiSearch } from "react-icons/fi";
 
@@ -140,11 +140,7 @@ export default function DataProdi() {
   };
 
   return (
-    <div className="flex min-h-screen min-w-screen bg-gray-50">
-      {/* Fixed Sidebar */}
-        <AdminSidebar />
-
-      {/* Main Content with padding to account for fixed sidebar */}
+    <Layout>
       <main className="flex-1 p-6 overflow-auto">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -348,6 +344,6 @@ export default function DataProdi() {
           </motion.div>
         </motion.div>
       </main>
-    </div>
+    </Layout>
   );
 }

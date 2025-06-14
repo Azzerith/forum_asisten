@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import AdminSidebar from '../../components/AdminSidebar';
+import Layout from "../../components/Layout";
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiEdit2, 
@@ -377,21 +377,19 @@ const submitUpdate = async () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen min-w-screen bg-gray-50">
-        <AdminSidebar />
+      <Layout>
         <main className="flex-1 p-6 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
             <p className="mt-4 text-gray-600">Memuat data rekapitulasi...</p>
           </div>
         </main>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="text-gray-600 flex min-h-screen min-w-screen bg-gray-50">
-      <AdminSidebar />
+    <Layout>
       <main className="flex-1 p-6">
         <ToastContainer position="top-right" autoClose={3000} />
         
@@ -938,7 +936,7 @@ const submitUpdate = async () => {
           </div>
         )}
       </main>
-    </div>
+    </Layout>
   );
 };
 

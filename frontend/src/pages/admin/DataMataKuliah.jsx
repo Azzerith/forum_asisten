@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import AdminSidebar from "../../components/AdminSidebar";
+import Layout from "../../components/Layout";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiX, FiCheck, FiBook, FiChevronDown, FiChevronUp } from "react-icons/fi";
@@ -205,8 +205,7 @@ export default function DataMataKuliah() {
   }, [selectedMataKuliah]);
 
   return (
-    <div className="flex min-h-screen min-w-screen bg-gray-50">
-      <AdminSidebar />
+    <Layout>
       <main className="flex-1 p-6 overflow-x-hidden">
         <motion.h1 
           className="text-3xl font-bold text-blue-900 mb-8"
@@ -447,6 +446,6 @@ export default function DataMataKuliah() {
           </motion.div>
         )}
       </main>
-    </div>
+    </Layout>
   );
 }

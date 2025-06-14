@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import AdminSidebar from "../../components/AdminSidebar";
+import Layout from "../../components/Layout";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiClock, FiCalendar, FiBook, FiUser, FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
@@ -292,15 +292,14 @@ export default function DataJadwal() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen min-w-screen bg-gray-50">
-        <AdminSidebar />
+      <Layout>
         <main className="flex-1 p-6 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
             <p className="mt-4 text-gray-600">Memuat data...</p>
           </div>
         </main>
-      </div>
+      </Layout>
     );
   }
 
@@ -315,8 +314,7 @@ const showSuccess = (message) => {
   };
 
   return (
-     <div className="flex min-h-screen min-w-screen bg-gray-50">
-      <AdminSidebar />
+     <Layout>
       <main className="flex-1 p-6">
         <div className="mb-6 flex justify-between items-center">
           <div>
@@ -618,6 +616,6 @@ const showSuccess = (message) => {
           </div>
         )}
       </main>
-    </div>
+    </Layout>
   );
 }

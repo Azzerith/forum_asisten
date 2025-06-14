@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import SidebarMenu from '../components/Sidebar';
+import Layout from "../components/Layout";
 import { motion } from 'framer-motion';
 import { FiChevronDown, FiChevronUp, FiCheck, FiClock, FiX, FiUser, FiDollarSign, FiSearch, FiCalendar, FiBook, FiEye, FiDownload } from 'react-icons/fi';
 
@@ -209,110 +209,111 @@ const RekapitulasiPage = () => {
 
   // Mobile-friendly stats grid
   const StatsGrid = ({ rekapitulasiData }) => (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
       {rekapitulasiData.map((item) => (
         <React.Fragment key={item.id}>
-          <div className="bg-green-50 p-3 md:p-4 rounded-lg border border-green-100">
+          <div className="bg-green-50 p-2 sm:p-3 rounded-lg border border-green-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs md:text-sm text-green-600">Hadir</p>
-                <p className="text-lg md:text-2xl font-bold text-green-700">{item.jumlah_hadir}</p>
+                <p className="text-xs text-green-600">Hadir</p>
+                <p className="text-sm sm:text-base font-bold text-green-700">{item.jumlah_hadir}</p>
               </div>
-              <div className="p-1 md:p-2 bg-green-100 rounded-full text-green-600">
-                <FiCheck className="w-4 h-4 md:w-5 md:h-5" />
+              <div className="p-1 bg-green-100 rounded-full text-green-600">
+                <FiCheck className="w-3 h-3 sm:w-4 sm:h-4" />
               </div>
             </div>
           </div>
           
-          <div className="bg-yellow-50 p-3 md:p-4 rounded-lg border border-yellow-100">
+          {/* Repeat similar structure for other stats */}
+          <div className="bg-yellow-50 p-2 sm:p-3 rounded-lg border border-yellow-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs md:text-sm text-yellow-600">Izin</p>
-                <p className="text-lg md:text-2xl font-bold text-yellow-700">{item.jumlah_izin}</p>
+                <p className="text-xs text-yellow-600">Izin</p>
+                <p className="text-sm sm:text-base font-bold text-yellow-700">{item.jumlah_izin}</p>
               </div>
-              <div className="p-1 md:p-2 bg-yellow-100 rounded-full text-yellow-600">
-                <FiClock className="w-4 h-4 md:w-5 md:h-5" />
+              <div className="p-1 bg-yellow-100 rounded-full text-yellow-600">
+                <FiClock className="w-3 h-3 sm:w-4 sm:h-4" />
               </div>
             </div>
           </div>
           
-          <div className="bg-red-50 p-3 md:p-4 rounded-lg border border-red-100">
+          <div className="bg-red-50 p-2 sm:p-3 rounded-lg border border-red-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs md:text-sm text-red-600">Alpha</p>
-                <p className="text-lg md:text-2xl font-bold text-red-700">{item.jumlah_alpha}</p>
+                <p className="text-xs text-red-600">Alpha</p>
+                <p className="text-sm sm:text-base font-bold text-red-700">{item.jumlah_alpha}</p>
               </div>
-              <div className="p-1 md:p-2 bg-red-100 rounded-full text-red-600">
-                <FiX className="w-4 h-4 md:w-5 md:h-5" />
+              <div className="p-1 bg-red-100 rounded-full text-red-600">
+                <FiX className="w-3 h-3 sm:w-4 sm:h-4" />
               </div>
             </div>
           </div>
           
-          <div className="bg-purple-50 p-3 md:p-4 rounded-lg border border-purple-100">
+          <div className="bg-purple-50 p-2 sm:p-3 rounded-lg border border-purple-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs md:text-sm text-purple-600">Pengganti</p>
-                <p className="text-lg md:text-2xl font-bold text-purple-700">{item.jumlah_pengganti}</p>
+                <p className="text-xs text-purple-600">Pengganti</p>
+                <p className="text-sm sm:text-base font-bold text-purple-700">{item.jumlah_pengganti}</p>
               </div>
-              <div className="p-1 md:p-2 bg-purple-100 rounded-full text-purple-600">
-                <FiUser className="w-4 h-4 md:w-5 md:h-5" />
+              <div className="p-1 bg-purple-100 rounded-full text-purple-600">
+                <FiUser className="w-3 h-3 sm:w-4 sm:h-4" />
               </div>
             </div>
           </div>
 
-          <div className="bg-blue-50 p-3 md:p-4 rounded-lg border border-blue-100">
+          <div className="bg-blue-50 p-2 sm:p-3 rounded-lg border border-blue-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs md:text-sm text-blue-600">Honor/Pertemuan</p>
-                <p className="text-lg md:text-2xl font-bold text-blue-700">Rp {item.honor_pertemuan.toLocaleString()}</p>
+                <p className="text-xs text-blue-600">Honor/Pertemuan</p>
+                <p className="text-sm sm:text-base font-bold text-blue-700">Rp {item.honor_pertemuan.toLocaleString()}</p>
               </div>
-              <div className="p-1 md:p-2 bg-blue-100 rounded-full text-blue-600">
-                <FiDollarSign className="w-4 h-4 md:w-5 md:h-5" />
+              <div className="p-1 bg-blue-100 rounded-full text-blue-600">
+                <FiDollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
               </div>
             </div>
           </div>
 
-          <div className="bg-indigo-50 p-3 md:p-4 rounded-lg border border-indigo-100">
+          <div className="bg-indigo-50 p-2 sm:p-3 rounded-lg border border-indigo-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs md:text-sm text-indigo-600">Total Honor</p>
-                <p className="text-lg md:text-2xl font-bold text-indigo-700">Rp {item.total_honor.toLocaleString()}</p>
+                <p className="text-xs text-indigo-600">Total Honor</p>
+                <p className="text-sm sm:text-base font-bold text-indigo-700">Rp {item.total_honor.toLocaleString()}</p>
               </div>
-              <div className="p-1 md:p-2 bg-indigo-100 rounded-full text-indigo-600">
-                <FiDollarSign className="w-4 h-4 md:w-5 md:h-5" />
+              <div className="p-1 bg-indigo-100 rounded-full text-indigo-600">
+                <FiDollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
               </div>
             </div>
           </div>
         </React.Fragment>
       ))}
     </div>
-  );
+  );;
 
   // Mobile-friendly search and filter controls
   const SearchAndFilterControls = () => (
-    <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
-      <div className="relative flex-1">
+    <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:space-x-2">
+      <div className="relative flex-1 min-w-0">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <FiSearch className="text-gray-400" />
         </div>
         <input
           type="text"
-          placeholder="Cari mata kuliah, kelas..."
-          className="text-sm md:text-base pl-10 pr-4 py-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Cari..."
+          className="text-xs sm:text-sm pl-8 pr-3 py-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-1 focus:ring-blue-500"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
       <select
-        className="text-sm md:text-base text-gray-700 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="text-xs sm:text-sm text-gray-700 border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
         value={groupBy}
         onChange={(e) => setGroupBy(e.target.value)}
       >
-        <option value="date">Kelompokkan berdasarkan Tanggal</option>
-        <option value="matkul">Kelompokkan berdasarkan Mata Kuliah</option>
+        <option value="date">By Tanggal</option>
+        <option value="matkul">By Matkul</option>
       </select>
       <select
-        className="text-sm md:text-base text-gray-700 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="text-xs sm:text-sm text-gray-700 border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
         value={sortOrder}
         onChange={(e) => setSortOrder(e.target.value)}
       >
@@ -325,55 +326,54 @@ const RekapitulasiPage = () => {
   // Mobile-friendly table row
   const PresensiTableRow = ({ item }) => (
     <tr key={item.id} className="hover:bg-gray-50">
-      <td className="px-3 py-4 md:px-6">
-        <div className="flex items-center">
-          <div className="flex-shrink-0 h-8 w-8 md:h-10 md:w-10 bg-purple-100 rounded-full flex items-center justify-center">
-            <FiBook className="text-purple-600 text-sm md:text-base" />
+      <td className="px-2 py-3">
+        <div className="flex items-center min-w-0">
+          <div className="flex-shrink-0 h-6 w-6 sm:h-8 sm:w-8 bg-purple-100 rounded-full flex items-center justify-center">
+            <FiBook className="text-purple-600 text-xs sm:text-sm" />
           </div>
-          <div className="ml-2 md:ml-4">
-            <div className="text-xs md:text-sm font-medium text-gray-900 line-clamp-1">
+          <div className="ml-2 overflow-hidden">
+            <div className="text-xs font-medium text-gray-900 truncate">
               {item.jadwal?.mata_kuliah?.nama || 'N/A'}
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-2xs text-gray-500 truncate">
               {item.jenis}
             </div>
           </div>
         </div>
       </td>
-      <td className="px-3 py-4 md:px-6">
-        <div className="flex items-center">
-          <FiCalendar className="text-gray-400 mr-1 md:mr-2 text-sm md:text-base" />
-          <div>
-            <div className="text-xs md:text-sm font-medium text-gray-900 line-clamp-1">
+      <td className="px-2 py-3">
+        <div className="flex items-center min-w-0">
+          <FiCalendar className="text-gray-400 mr-1 text-xs sm:text-sm" />
+          <div className="overflow-hidden">
+            <div className="text-xs font-medium text-gray-900 truncate">
               {item.jadwal?.hari}
             </div>
-            <div className="text-xs text-gray-500 flex items-center">
-              <FiClock className="mr-1 text-xs" />
+            <div className="text-2xs text-gray-500 flex items-center truncate">
+              <FiClock className="mr-0.5" />
               {item.jadwal?.jam_mulai} - {item.jadwal?.jam_selesai}
             </div>
           </div>
         </div>
       </td>
-      <td className="px-3 py-4 md:px-6">
-        <div className="text-xs md:text-sm text-gray-900 line-clamp-1">{item.jadwal?.kelas}</div>
-        <div className="text-xs text-gray-500 line-clamp-1">{item.jadwal?.lab}</div>
+      <td className="px-2 py-3">
+        <div className="text-xs text-gray-900 truncate">{item.jadwal?.kelas}</div>
+        <div className="text-2xs text-gray-500 truncate">{item.jadwal?.lab}</div>
       </td>
-      <td className="px-3 py-4 md:px-6">
-        <div className="flex items-center">
-          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusColors[item.status] || 'bg-gray-100 text-gray-800'}`}>
-            {item.status}
-          </span>
-        </div>
+      <td className="px-2 py-3">
+        <span className={`px-1.5 py-0.5 text-2xs sm:text-xs font-semibold rounded-full ${statusColors[item.status] || 'bg-gray-100 text-gray-800'}`}>
+          {item.status}
+        </span>
       </td>
-      <td className="px-3 py-4 whitespace-nowrap text-xs md:text-sm text-gray-500">
-        {new Date(item.waktu_input).toLocaleDateString('id-ID')}
+      <td className="px-2 py-3 whitespace-nowrap text-2xs sm:text-xs text-gray-500">
+        {new Date(item.waktu_input).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
       </td>
-      <td className="px-3 py-4 whitespace-nowrap text-xs md:text-sm font-medium">
+      <td className="px-2 py-3 whitespace-nowrap text-xs font-medium">
         <button
           onClick={() => openDetailModal(item)}
-          className="text-blue-600 hover:text-blue-900"
+          className="text-blue-600 hover:text-blue-900 flex items-center"
         >
-          <FiEye className="inline mr-1" /> <span className="hidden md:inline">Detail</span>
+          <FiEye className="sm:mr-1" />
+          <span className="hidden sm:inline">Detail</span>
         </button>
       </td>
     </tr>
@@ -381,28 +381,26 @@ const RekapitulasiPage = () => {
 
   if (loading || !dataLoaded) {
     return (
-      <div className="flex min-h-screen bg-gray-50">
-        <SidebarMenu />
+      <Layout>
         <main className="flex-1 p-4 md:p-6 flex flex-col items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
           <p className="text-gray-600">Memuat data rekapitulasi...</p>
         </main>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <SidebarMenu />
+    <Layout>
       <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
-        <motion.h1 
+        {/* <motion.h1 
           className="text-2xl md:text-3xl font-bold text-blue-900 mb-4 md:mb-8"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
           Rekapitulasi Kehadiran
-        </motion.h1>
+        </motion.h1> */}
 
         {/* Presensi Stats Section */}
         {rekapitulasiData.map((item, index) => (
@@ -635,7 +633,7 @@ const RekapitulasiPage = () => {
           </div>
         )}
       </main>
-    </div>
+    </Layout>
   );
 };
 
