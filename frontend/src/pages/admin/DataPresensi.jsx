@@ -622,9 +622,9 @@ export default function DataPresensi() {
                               }}
                             />
                           </div>
-                          <p className="mt-2 text-xs text-gray-500 text-center">
+                          {/* <p className="mt-2 text-xs text-gray-500 text-center">
                             Klik kanan pada gambar untuk opsi lainnya
-                          </p>
+                          </p> */}
                         </div>
                       ) : (
                         <p className="text-gray-500 h-full flex items-center justify-center">Tidak ada bukti</p>

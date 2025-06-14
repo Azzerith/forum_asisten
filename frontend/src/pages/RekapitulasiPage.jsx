@@ -97,51 +97,6 @@ const RekapitulasiPage = () => {
     fetchData();
   }, []);
 
-  // Process data for grouping by mata kuliah
-  const groupedByMataKuliah = useMemo(() => {
-    if (!dataLoaded) return {};
-    
-    const grouped = {};
-    
-    if (!Array.isArray(presensiData)) return grouped;
-
-    presensiData.forEach(item => {
-      if (item && item.jadwal && item.jadwal.mata_kuliah) {
-        const matkulId = item.jadwal.mata_kuliah.id;
-        const matkulName = item.jadwal.mata_kuliah.nama;
-        const matkulKode = item.jadwal.mata_kuliah.kode;
-        
-        if (!grouped[matkulId]) {
-          grouped[matkulId] = {
-            mataKuliah: {
-              id: matkulId,
-              nama: matkulName,
-              kode: matkulKode
-            },
-            jadwal: item.jadwal,
-            presensi: [],
-            stats: {
-              hadir: 0,
-              izin: 0,
-              alpha: 0,
-              pengganti: 0
-            }
-          };
-        }
-        
-        grouped[matkulId].presensi.push(item);
-        
-        // Update stats
-        if (item.status === 'hadir') grouped[matkulId].stats.hadir++;
-        if (item.status === 'izin') grouped[matkulId].stats.izin++;
-        if (item.status === 'alpha') grouped[matkulId].stats.alpha++;
-        if (item.jenis === 'pengganti') grouped[matkulId].stats.pengganti++;
-      }
-    });
-
-    return grouped;
-  }, [presensiData, dataLoaded]);
-
   // Filter and sort presensi data
   const filteredPresensi = useMemo(() => {
     if (!dataLoaded) return [];
