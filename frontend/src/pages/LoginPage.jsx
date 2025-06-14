@@ -89,7 +89,7 @@ export default function LoginPage() {
                   : 'bg-red-500 hover:bg-red-600'
               } transition duration-200`}
             >
-              Tutup
+              OK
             </button>
           </div>
         </div>
