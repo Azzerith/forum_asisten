@@ -252,7 +252,7 @@ export default function DataMataKuliah() {
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-2 overflow-y-auto" style={{ maxHeight: "450px" }}>
               {filteredGroupedMataKuliah.length > 0 ? (
                 filteredGroupedMataKuliah.map(group => (
                   <div key={group.prodi.id} className="border border-gray-200 rounded-lg overflow-hidden">

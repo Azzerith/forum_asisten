@@ -302,7 +302,7 @@ export default function DataProdi() {
                 )}
               </div>
             ) : (
-              <div className="divide-y divide-gray-200">
+              <div className="divide-y divide-gray-200 overflow-y-auto" style={{ maxHeight: "200px" }}>
                 <AnimatePresence>
                   {filteredProdi.map((d) => (
                     <motion.div

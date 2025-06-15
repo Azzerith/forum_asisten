@@ -409,7 +409,7 @@ const fetchAvailableAssistants = async () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden space-y-6 overflow-y-auto" style={{ maxHeight: "495px" }}>
           {Object.keys(groupedSchedules).length === 0 ? (
             <div className="p-6 text-center text-gray-500">
               {searchTerm ? "Tidak ditemukan jadwal yang sesuai dengan pencarian" : "Tidak ada data jadwal"}

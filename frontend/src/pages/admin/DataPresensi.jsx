@@ -328,7 +328,7 @@ export default function DataPresensi() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden space-y-6 overflow-y-auto" style={{ maxHeight: "455px" }}>
           {Object.values(groupedPresensi).map((group) => {
             const isExpanded = expandedGroups[group.key] !== false;
 

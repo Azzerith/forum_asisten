@@ -353,7 +353,7 @@ const showSuccess = (message) => {
           </button>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden space-y-2 overflow-y-auto" style={{ maxHeight: "555px" }}>
             
           {Object.entries(groupedSchedules).map(([programStudi, semesters]) => (
             <div key={programStudi} className="mb-6">

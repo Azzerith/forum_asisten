@@ -193,14 +193,14 @@ export default function AdminHomePage() {
           {stats.map((stat, index) => (
             <motion.div
               key={index}
-              className="text-black bg-white p-6 rounded-xl shadow hover:shadow-md transition-shadow"
+              className="text-white bg-gradient-to-r from-blue-600 to-indigo-700 p-6 rounded-xl shadow hover:shadow-md transition-shadow"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1, duration: 0.3 }}
             >
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">{stat.title}</p>
+                  <p className="text-sm font-medium text-white">{stat.title}</p>
                   <p className="text-2xl font-bold mt-1">{stat.value}</p>
                 </div>
                 <div className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -215,7 +215,6 @@ export default function AdminHomePage() {
           ))}
         </section>
 
-        {/* Grafik dan Tugas Penting */}
         <section className="grid gap-6 lg:grid-cols-3">
           {/* Aktivitas Presensi dengan Scroll Independen */}
           <motion.div 
@@ -228,7 +227,7 @@ export default function AdminHomePage() {
             {recentActivities.length > 0 ? (
               <div 
                 className="space-y-6 overflow-y-auto"
-                style={{ maxHeight: "500px" }} // Set max height for scroll
+                style={{ maxHeight: "330px" }}
               >
                 {recentActivities.map((group, groupIndex) => (
                   <div key={groupIndex} className="space-y-4">
