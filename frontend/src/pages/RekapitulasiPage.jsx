@@ -430,12 +430,12 @@ const RekapitulasiPage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between md:items-center mb-4 md:mb-6">
+          <div className="flex flex-col space-y-2 md:space-y-0 md:flex-row md:justify-between md:items-center mb-4 md:mb-6">
             <h3 className="text-lg md:text-xl font-semibold text-gray-800">Riwayat Presensi</h3>
             <SearchAndFilterControls />
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden overflow-y-auto" style={{ maxHeight: "300px" }}>
             {Object.values(groupedPresensi).map((group) => {
               const isExpanded = expandedGroups[group.key] !== false;
 

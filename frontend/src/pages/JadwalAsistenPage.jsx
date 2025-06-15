@@ -197,7 +197,7 @@ export default function JadwalAsistenPage() {
   return (
     <Layout>
       <motion.main 
-        className="flex-1 p-4 sm:p-6 overflow-x-hidden max-w-7xl mx-auto"
+        className="flex-1 p-4 sm:p-6 overflow-x-hidden max-w-7xl mx-auto overflow-y-auto" style={{ maxHeight: "600px" }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
