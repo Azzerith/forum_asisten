@@ -429,7 +429,7 @@ export default function PresensiPage() {
             setShowPresensiLain(!showPresensiLain);
             setShowForm(false);
           }}
-          className="mb-6 flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-all"
+          className="mb-6 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg shadow hover:bg-green-700 transition-all cursor-pointer"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -543,7 +543,7 @@ export default function PresensiPage() {
                     Upload Bukti Kehadiran (Foto tanggal di komputer dosen)
                   </label>
                   <div className="flex items-center gap-4">
-                    <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-all">
+                    <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-700 to-indigo-700 text-white rounded-lg shadow hover:bg-blue-700 transition-all">
                       <FiPaperclip className="mr-2" />
                       Pilih File
                       <input
@@ -691,7 +691,7 @@ export default function PresensiPage() {
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-all"
+              className="mt-2 px-4 py-2 bg-gradient-to-r from-blue-700 to-indigo-700 text-white rounded-lg shadow hover:bg-blue-700 transition-all cursor-pointer"
             >
               Muat Ulang
             </button>

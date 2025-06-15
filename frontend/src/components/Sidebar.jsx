@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import logo from "../assets/Logo-FA.png";
 import {  
   FiX, 
   FiHome, 
@@ -64,8 +65,13 @@ export function Sidebar({ isOpen, setIsOpen }) {
               <div>
                 {/* Sidebar Header */}
                 <div className="flex justify-between items-center mb-8 pt-4">
-                  <div className="text-2xl font-bold text-white">
-                    Forum Asisten
+                <img
+                    src={logo}
+                    alt="logo"
+                    className="mx-auto w-20 h-20 object-contain drop-shadow-md rounded-full p-1"
+                  />
+                  <div className="text-l font-bold text-white">
+                    E-presensi <br/>Forum Asisten
                   </div>
                   
                   {/* Close Button - Mobile only */}
