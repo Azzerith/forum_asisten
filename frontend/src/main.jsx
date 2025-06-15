@@ -3,9 +3,6 @@ import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import './index.css'
 
-// Layout
-const Layout = lazy(() => import('./components/Layout'))
-
 // Public Pages
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const HomePage = lazy(() => import('./pages/HomePage'))
@@ -42,7 +39,6 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />
   },
   {
-    element: <Layout />, // Gunakan satu layout untuk semua halaman
     errorElement: <ErrorPage />,
     children: [
       // Route User Biasa
@@ -66,11 +62,16 @@ const router = createBrowserRouter([
     ]
   }
 ])
+const rootElement = document.getElementById('root')
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <Suspense fallback={<div className="loading-spinner">Memuat...</div>}>
-      <RouterProvider router={router} />
-    </Suspense>
-  </React.StrictMode>
-)
+// Cegah pemanggilan createRoot() berkali-kali
+if (!rootElement._reactRootContainer) {
+  const root = ReactDOM.createRoot(rootElement)
+  root.render(
+    <React.StrictMode>
+      <Suspense fallback={<div className="loading-spinner">Memuat...</div>}>
+        <RouterProvider router={router} />
+      </Suspense>
+    </React.StrictMode>
+  )
+}

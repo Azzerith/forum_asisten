@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   FiBook, FiChevronLeft, FiChevronDown, FiChevronUp, 
   FiClock, FiUser, FiUsers, FiCalendar, 
-  FiX, FiCheck 
+  FiX, FiCheck, FiAlertCircle
 } from "react-icons/fi";
 
 export default function MataKuliahPage() {
@@ -17,6 +17,7 @@ export default function MataKuliahPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const [userStatus, setUserStatus] = useState('aktif');
   const [isUserLoading, setIsUserLoading] = useState(true);
   const [modal, setModal] = useState({
     show: false,
@@ -28,12 +29,18 @@ export default function MataKuliahPage() {
 
   // Get user from localStorage or token
   useEffect(() => {
-    const loadUser = () => {
+    const loadUser = async () => {
       setIsUserLoading(true);
       try {
         const savedUser = localStorage.getItem('user');
         if (savedUser) {
-          setUser(JSON.parse(savedUser));
+          const parsedUser = JSON.parse(savedUser);
+          setUser(parsedUser);
+          
+          // Check if status exists in the saved user data
+          if (parsedUser.status) {
+            setUserStatus(parsedUser.status);
+          }
           return;
         }
 
@@ -42,9 +49,16 @@ export default function MataKuliahPage() {
           const payload = JSON.parse(atob(token.split('.')[1]));
           setUser(payload);
           localStorage.setItem('user', JSON.stringify(payload));
+          
+          // Check if status exists in the token payload
+          if (payload.status) {
+            setUserStatus(payload.status);
+          }
         }
       } catch (err) {
         console.error("Error loading user:", err);
+        // If there's an error, we'll assume the user is active
+        setUserStatus('aktif');
       } finally {
         setIsUserLoading(false);
       }
@@ -179,6 +193,42 @@ export default function MataKuliahPage() {
           Refresh
         </button>
       </div>
+    );
+  }
+
+  // Check if user status is non-aktif
+  if (userStatus === 'non-aktif') {
+    return (
+      <Layout>
+        <main className="flex-1 p-6">
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white rounded-xl shadow-md overflow-hidden border border-red-200">
+              <div className="p-6 md:p-8">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                    <FiAlertCircle className="text-red-500 text-2xl" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-800 mb-2">Status Akun Non-Aktif</h2>
+                  <p className="text-gray-600 mb-6">
+                    Akun Anda saat ini berstatus non-aktif. Anda tidak dapat melakukan aksi pada halaman ini.
+                    Silakan hubungi administrator untuk mengaktifkan akun Anda.
+                  </p>
+                  <div className="w-full bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-center space-x-2">
+                      <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+                        Status: Non-Aktif
+                      </span>
+                      <span className="text-gray-600 text-sm">
+                        Nama: {user.nama}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </Layout>
     );
   }
 
