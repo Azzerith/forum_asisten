@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Layout from "../components/Layout";
-import { FiCheckCircle, FiPaperclip, FiPlus, FiSearch, FiX } from "react-icons/fi";
+import { FiCheckCircle, FiPaperclip, FiPlus, FiSearch, FiX, FiAlertCircle } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -9,6 +9,7 @@ export default function PresensiPage() {
   const [jadwal, setJadwal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [userStatus, setUserStatus] = useState('aktif');
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const [status, setStatus] = useState("hadir");
@@ -88,23 +89,44 @@ export default function PresensiPage() {
 
   // Ambil user dari token
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
+    const loadUser = async () => {
       try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        console.log("Token payload:", payload);
-        setUser({ user_id: payload.user_id, ...payload });
+        const token = localStorage.getItem("token");
+        if (token) {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          console.log("Token payload:", payload);
+          const userData = { user_id: payload.user_id, ...payload };
+          setUser(userData);
+          
+          // Check if status exists in the token payload
+          if (payload.status) {
+            setUserStatus(payload.status);
+          } else {
+            // If status isn't in token, try to get from localStorage
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+              const parsedUser = JSON.parse(savedUser);
+              if (parsedUser.status) {
+                setUserStatus(parsedUser.status);
+              }
+            }
+          }
+        } else {
+          setErrorMessage("Anda harus login terlebih dahulu");
+          setShowErrorModal(true);
+          setTimeout(() => navigate("/login"), 2000);
+        }
       } catch (err) {
         console.error("Token parsing error:", err);
         setErrorMessage("Sesi login telah habis, silahkan login kembali");
         setShowErrorModal(true);
         setTimeout(() => navigate("/login"), 2000);
+        // If there's an error, we'll assume the user is active
+        setUserStatus('aktif');
       }
-    } else {
-      setErrorMessage("Anda harus login terlebih dahulu");
-      setShowErrorModal(true);
-      setTimeout(() => navigate("/login"), 2000);
-    }
+    };
+
+    loadUser();
   }, [navigate]);
 
   // Fungsi bantu: cek apakah jadwal hari ini
@@ -353,6 +375,42 @@ export default function PresensiPage() {
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
             <p className="mt-4 text-gray-600">Memuat data presensi...</p>
+          </div>
+        </main>
+      </Layout>
+    );
+  }
+
+  // Check if user status is non-aktif
+  if (userStatus === 'non-aktif') {
+    return (
+      <Layout>
+        <main className="flex-1 p-6">
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white rounded-xl shadow-md overflow-hidden border border-red-200">
+              <div className="p-6 md:p-8">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                    <FiAlertCircle className="text-red-500 text-2xl" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-800 mb-2">Status Akun Non-Aktif</h2>
+                  <p className="text-gray-600 mb-6">
+                    Akun Anda saat ini berstatus non-aktif. Anda tidak dapat melakukan aksi pada halaman ini.
+                    Silakan hubungi administrator untuk mengaktifkan akun Anda.
+                  </p>
+                  <div className="w-full bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-center space-x-2">
+                      <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+                        Status: Non-Aktif
+                      </span>
+                      <span className="text-gray-600 text-sm">
+                        Nama: {user.nama}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </Layout>
