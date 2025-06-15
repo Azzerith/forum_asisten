@@ -136,9 +136,9 @@ export function AdminSidebar({ isOpen, setIsOpen }) {
                 </Link>
 
                 <Link 
-                  to="/admin/profile" 
+                  to="/admin/home" 
                   className={`flex items-center gap-3 mt-4 p-3 rounded-lg transition-all ${
-                    location.pathname === "/admin/profile" 
+                    location.pathname === "/admin/home" 
                       ? "bg-white/20 font-medium" 
                       : "bg-white/10 hover:bg-white/20"
                   }`}

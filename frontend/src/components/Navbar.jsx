@@ -46,7 +46,7 @@ export function Navbar({ toggleSidebar }) {
 
         <div className="text-white flex items-center gap-4">        
           <Link 
-            to={isAdmin ? "/admin/profile" : "/profile"} 
+            to={isAdmin ? "/admin/home" : "/profile"} 
             className="flex items-center gap-2"
           >
             <div className="w-8 h-8 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center font-medium hover:bg-blue-200 transition-colors">
