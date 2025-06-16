@@ -259,13 +259,15 @@ export default function HomePage() {
           <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {announcements.map((item, index) => (
               <motion.article
-                key={index}
-                className={`bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-5 rounded-xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden`}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2 + index * 0.1, duration: 0.3 }}
-                whileHover={{ y: -5 }}
-              >
+              key={index}
+              className="relative bg-gradient-to-r from-pink-600 to-violet-900 text-white p-5 rounded-xl shadow-lg overflow-hidden z-0"
+              style={{ maxWidth: "400px" }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 + index * 0.1, duration: 0.3 }}
+              whileHover={{ y: -5 }}
+            >
+              <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-2xl">{item.icon}</span>
                   <h2 className="text-lg font-semibold">{item.title}</h2>
@@ -281,6 +283,33 @@ export default function HomePage() {
                     Presensi Sekarang <FiArrowUpRight className="text-xs" />
                   </motion.button>
                 )}
+                </div>
+                <div className="absolute inset-0 overflow-hidden z-1">
+                 <style jsx>{`
+                    &::before {
+                      content: '';
+                      position: absolute;
+                      top: 0;
+                      left: -100%;
+                      width: 100%;
+                      height: 100%;
+                      background: linear-gradient(
+                        90deg,
+                        transparent,
+                        rgba(255, 255, 255, 0.4),
+                        transparent
+                      );
+                      animation: shimmer 2s infinite;
+                      z-index: 1;
+                    }
+                    
+                    @keyframes shimmer {
+                      100% {
+                        left: 100%;
+                      }
+                    }
+                  `}</style>
+                  </div>
               </motion.article>
             ))}
           </div>

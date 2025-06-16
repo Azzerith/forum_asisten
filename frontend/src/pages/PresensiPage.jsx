@@ -652,7 +652,7 @@ export default function PresensiPage() {
         {jadwal ? (
           <motion.div
             onClick={() => setShowForm(!showForm)}
-            className="cursor-pointer bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-6 mb-6 shadow-lg hover:scale-[1.01] transition-transform"
+            className="cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl p-6 mb-6 shadow-lg hover:scale-[1.01] transition-transform"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.3 }}
@@ -667,12 +667,29 @@ export default function PresensiPage() {
               Dosen: {jadwal.jadwal?.dosen?.nama}
             </p>
             <p className="text-sm opacity-90">
-              Jadwal: {jadwal.jadwal?.hari}, {jadwal.jadwal?.jam_mulai} - {jadwal.jadwal?.jam_selesai}, 
-              {jadwal.jadwal?.lab}
+              Jadwal: {jadwal.jadwal?.hari}, {jadwal.jadwal?.jam_mulai} - {jadwal.jadwal?.jam_selesai}, {jadwal.jadwal?.lab}
             </p>
             <div className="mt-3 text-sm">
               {showForm ? "▲ Tutup form presensi" : "▼ Klik untuk presensi"}
             </div>
+            {/* <style jsx>{`
+                  .group:hover::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -100%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                    animation: shimmer 1.5s infinite;
+                  }
+                  
+                  @keyframes shimmer {
+                    100% {
+                      left: 100%;
+                    }
+                  }
+                `}</style> */}
           </motion.div>
         ) : (
           <motion.div
@@ -731,7 +748,7 @@ export default function PresensiPage() {
                     Upload Bukti Kehadiran (Foto tanggal di komputer dosen)
                   </label>
                   <div className="flex items-center gap-4">
-                    <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-all">
+                    <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-700 to-indigo-700 text-white rounded-lg shadow hover:bg-blue-700 transition-all">
                       <FiPaperclip className="mr-2" />
                       Pilih File
                       <input
@@ -814,7 +831,7 @@ export default function PresensiPage() {
               className={`w-full py-3 px-4 rounded-lg text-white font-medium text-lg ${
                 status === "izin"
                   ? "bg-gradient-to-r from-red-600 to-red-700"
-                  : "bg-gradient-to-r from-blue-600 to-blue-700"
+                  : "bg-gradient-to-r from-green-600 to-green-700"
               } shadow-md disabled:opacity-70`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

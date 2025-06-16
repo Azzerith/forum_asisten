@@ -258,7 +258,7 @@ export default function MataKuliahPage() {
         id: programId,
         name: schedule.mata_kuliah.program_studi.nama,
         description: `Program studi ${schedule.mata_kuliah.program_studi.nama}`,
-        color: programId === 1 ? "from-purple-600 to-purple-700" : "from-blue-600 to-blue-700",
+        color: programId === 1 ? "from-blue-600 to-indigo-700" : "from-blue-600 to-indigo-700",
         courses: [{
           id: schedule.mata_kuliah.id,
           name: schedule.mata_kuliah.nama,
