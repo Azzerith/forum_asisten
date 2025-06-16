@@ -231,7 +231,7 @@ export default function AdminHomePage() {
               >
                 {recentActivities.map((group, groupIndex) => (
                   <div key={groupIndex} className="space-y-4">
-                    <div className="text-sm font-medium text-gray-500 border-b pb-2 sticky top-0 bg-white z-10">
+                    <div className="text-sm font-medium text-gray-500 pb-2 sticky top-0 bg-white z-10">
                       {group.date}
                     </div>
                     {group.activities.map((activity) => (
