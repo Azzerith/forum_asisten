@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FiArrowUpRight, FiTrendingUp, FiClock, FiBell, FiUsers,FiBook } from "react-icons/fi";
+import { 
+  FiArrowUpRight, 
+  FiTrendingUp, 
+  FiClock, 
+  FiBell, 
+  FiUsers,
+  FiBook,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiAlertTriangle
+} from "react-icons/fi";
 import Layout from "../components/Layout";
 import axios from "axios";
 
@@ -9,20 +19,35 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [recentActivities, setRecentActivities] = useState([]);
-  const [activitiesLoading, setActivitiesLoading] = useState(true); 
-  // const [userActions, setUserActions] = useState([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
+  const [userStatus, setUserStatus] = useState('aktif');
+  const [isUserLoading, setIsUserLoading] = useState(true);
+  const [userActions, setUserActions] = useState([]);
 
   // Get user from token
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
+    const loadUser = async () => {
+      setIsUserLoading(true);
       try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        setUser({ user_id: payload.user_id, ...payload });
+        const token = localStorage.getItem("token");
+        if (token) {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          setUser({ user_id: payload.user_id, ...payload });
+
+          if (payload.status) {
+            setUserStatus(payload.status.toLowerCase());
+          }
+        }
       } catch (err) {
-        console.error("Token parsing error:", err);
+        console.error("Error loading user:", err);
+        // Default ke status aktif jika ada error
+        setUserStatus('aktif');
+      } finally {
+        setIsUserLoading(false);
       }
-    }
+    };
+  
+    loadUser();
   }, []);
 
   // Fetch user recent activities
@@ -32,60 +57,72 @@ export default function HomePage() {
     const fetchUserActivities = async () => {
       try {
         setLoading(true);
-        setActivitiesLoading(true);
-        // Fetch user's recent presensi
-        const presensiRes = await axios.get(
-          `${import.meta.env.VITE_REACT_APP_BASEURL}/api/presensi?user_id=${user.user_id}&limit=3`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
+        
+        // Fetch user's recent activities (presensi and jadwal)
+        const [presensiRes, jadwalRes] = await Promise.all([
+          axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/presensi?user_id=${user.user_id}&limit=20`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          }),
+          axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas?user_id=${user.user_id}&limit=20`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          })
+        ]);
+
+        // Format activities data
+        const formattedActivities = [
+          ...presensiRes.data.map(item => ({
+            type: 'presensi',
+            id: item.id,
+            title: `Presensi ${item.status}`,
+            description: `${item.jadwal?.mata_kuliah?.nama || 'Mata Kuliah'} - ${item.jadwal?.kelas || 'Kelas'}`,
+            time: formatTimeAgo(item.created_at),
+            date: new Date(item.created_at).toLocaleDateString('id-ID', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            }),
+            rawDate: new Date(item.created_at).toISOString().split('T')[0],
+            icon: <FiCheckCircle className="text-green-500" />
+          })),
+          ...jadwalRes.data.map(item => ({
+            type: 'jadwal',
+            id: item.id,
+            title: `Mengambil Jadwal`,
+            description: `${item.jadwal?.mata_kuliah?.nama || 'Mata Kuliah'} - ${item.jadwal?.kelas || 'Kelas'}`,
+            time: formatTimeAgo(item.created_at),
+            date: new Date(item.created_at).toLocaleDateString('id-ID', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            }),
+            rawDate: new Date(item.created_at).toISOString().split('T')[0],
+            icon: <FiBook className="text-blue-500" />
+          }))
+        ];
+
+        // Group activities by date
+        const groupedActivities = formattedActivities.reduce((acc, activity) => {
+          if (!acc[activity.rawDate]) {
+            acc[activity.rawDate] = {
+              date: activity.date,
+              activities: []
+            };
           }
-        );
+          acc[activity.rawDate].activities.push(activity);
+          return acc;
+        }, {});
 
-        // Fetch user's recent jadwal assignments
-        const jadwalRes = await axios.get(
-          `${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas?user_id=${user.user_id}&limit=3`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        // Convert to array and sort by date (newest first)
+        const sortedGroupedActivities = Object.values(groupedActivities)
+          .sort((a, b) => new Date(b.activities[0].rawDate) - new Date(a.activities[0].rawDate));
 
-        // Format presensi activities
-        const presensiActivities = presensiRes.data.map(item => ({
-          type: 'presensi',
-          id: item.id,
-          title: `Presensi ${item.status} untuk ${item.jadwal?.mata_kuliah?.nama || 'matkul'} - ${item.jadwal?.kelas || 'kelas'}`,
-          time: formatTimeAgo(item.created_at),
-          icon: <FiCheckCircle className="text-green-500" />,
-          action: 'presensi'
-        }));
+        setRecentActivities(sortedGroupedActivities);
 
-        // Format jadwal activities
-        const jadwalActivities = jadwalRes.data.map(item => ({
-          type: 'jadwal',
-          id: item.id,
-          title: `Mengambil jadwal ${item.jadwal?.mata_kuliah?.nama || 'matkul'} - ${item.jadwal?.kelas || 'kelas'}`,
-          time: formatTimeAgo(item.created_at),
-          icon: <FiBook className="text-blue-500" />,
-          action: 'jadwal'
-        }));
-
-        // Combine and sort by time (newest first)
-        const combinedActivities = [...presensiActivities, ...jadwalActivities]
-          .sort((a, b) => new Date(b.time) - new Date(a.time))
-          .slice(0, 3); // Limit to 3 most recent
-
-        setRecentActivities(combinedActivities);
-        setUserActions(combinedActivities);
-      } catch (err) {
-        console.error("Failed to fetch user activities", err);
-        // Fallback to default activities if API fails
-        setRecentActivities([]);
+      } catch (error) {
+        console.error("Error fetching activities:", error);
       } finally {
-        setActivitiesLoading(false);
         setLoading(false);
       }
     };
@@ -132,7 +169,7 @@ export default function HomePage() {
       try {
         const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`
           },
         });
 
@@ -235,6 +272,61 @@ export default function HomePage() {
     );
   }
 
+  if (isUserLoading) {
+    return (
+      <Layout>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </Layout>
+    );
+  }
+  
+  if (!user?.user_id) {
+    return (
+      <Layout>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-red-500">User tidak terdeteksi</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (userStatus === 'non-aktif') {
+    return (
+      <Layout>
+        <main className="flex-1 p-6">
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white rounded-xl shadow-md overflow-hidden border border-red-200">
+              <div className="p-6 md:p-8">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                    <FiAlertCircle className="text-red-500 text-2xl" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-800 mb-2">Status Akun Non-Aktif</h2>
+                  <p className="text-gray-600 mb-6">
+                    Akun Anda saat ini berstatus non-aktif. Anda tidak dapat melakukan aksi pada halaman ini.
+                    Silakan hubungi administrator untuk mengaktifkan akun Anda.
+                  </p>
+                  <div className="w-full bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-center space-x-2">
+                      <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+                        Status: Non-Aktif
+                      </span>
+                      <span className="text-gray-600 text-sm">
+                        Nama: {user.nama}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <motion.main 
@@ -329,70 +421,76 @@ export default function HomePage() {
 
         {/* Recent Activities */}
         <motion.section 
-          className="bg-white rounded-xl shadow-sm overflow-hidden"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <div className="p-5 sm:p-6">
-            <div className="flex items-center gap-3">
-              <FiTrendingUp className="text-blue-600 text-xl" />
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Aktivitas Terkini</h3>
-            </div>
-          </div>
-          
-          <div className="divide-y divide-gray-100">
-            {activitiesLoading ? (
-              <div className="p-4 sm:p-5 flex justify-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
-              </div>
-            ) : recentActivities.length > 0 ? (
-              recentActivities.map((activity, index) => (
-                <motion.article
-                  key={`${activity.type}-${activity.id}`}
-                  className="p-4 sm:p-5 hover:bg-gray-50 transition-colors"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 + index * 0.1 }}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="bg-blue-100 text-blue-600 p-2 rounded-full flex-shrink-0 mt-1">
-                      {activity.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm sm:text-base font-medium text-gray-800 mb-1">
-                        {activity.title}
-                      </h4>
-                      <p className="text-xs sm:text-sm text-gray-500">
-                        {activity.time}
-                      </p>
-                    </div>
-                  </div>
-                </motion.article>
-              ))
-            ) : (
-              <motion.article
-                className="p-4 sm:p-5 hover:bg-gray-50 transition-colors"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="bg-gray-100 text-gray-600 p-2 rounded-full flex-shrink-0 mt-1">
-                    <FiBook className="text-xl" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm sm:text-base font-medium text-gray-800 mb-1">
-                      Belum ada aktivitas terbaru
-                    </h4>
-                    <p className="text-xs sm:text-sm text-gray-500">
-                      Aktivitas Anda akan muncul di sini
-                    </p>
-                  </div>
+      className="bg-white rounded-xl shadow-sm overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      <div className="p-5 sm:p-6 border-b border-gray-200">
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Aktivitas Terkini</h3>
+        <p className="text-sm text-gray-500 mt-1">Riwayat aktivitas terbaru Anda</p>
+      </div>
+      
+      <div className="divide-y divide-gray-100">
+        {recentActivities.length > 0 ? (
+          <div className="overflow-y-auto" style={{ maxHeight: "400px" }}>
+            {recentActivities.map((group, groupIndex) => (
+              <div key={groupIndex} className="py-2">
+                <div className="px-5 py-3 text-sm font-medium text-gray-500 sticky top-0 bg-gray-50 z-10">
+                  {group.date}
                 </div>
-              </motion.article>
-            )}
+                {group.activities.map((activity, index) => (
+                  <motion.div
+                    key={`${activity.type}-${activity.id}`}
+                    className="p-4 sm:p-5 hover:bg-gray-50 transition-colors cursor-pointer"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + index * 0.05 }}
+                    onClick={() => handleActivityDetail(activity)}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="bg-blue-100 text-blue-600 p-2 rounded-full flex-shrink-0 mt-1">
+                        {activity.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm sm:text-base font-medium text-gray-800 mb-1">
+                          {activity.title}
+                        </h4>
+                        <p className="text-xs sm:text-sm text-gray-600 mb-1">
+                          {activity.description}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {activity.time}
+                        </p>
+                      </div>
+                      <button 
+                        className="text-xs text-blue-600 hover:text-blue-800 flex-shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleActivityDetail(activity);
+                        }}
+                      >
+                        Detail
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ))}
           </div>
-        </motion.section>
+        ) : (
+          <motion.div
+            className="p-4 sm:p-5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="text-center py-8">
+              <p className="text-gray-500">Belum ada aktivitas terbaru</p>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </motion.section>
       </motion.main>
     </Layout>
   );

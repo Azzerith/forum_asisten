@@ -198,7 +198,7 @@ export default function LoginPage() {
 
           <div className="mt-4 text-center text-sm text-gray-600">
             Belum punya akun?{" "}
-            <a href="#" className="font-medium text-blue-600 hover:underline">
+            <a href="/register" className="font-medium text-blue-600 hover:underline">
               Daftar sekarang
             </a>
           </div>

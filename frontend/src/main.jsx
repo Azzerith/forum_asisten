@@ -5,6 +5,7 @@ import './index.css'
 
 // Public Pages
 const LoginPage = lazy(() => import('./pages/LoginPage'))
+const RegisterPage = lazy(() => import('./pages/RegisterPage'))
 const HomePage = lazy(() => import('./pages/HomePage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const JadwalAsistenPage = lazy(() => import('./pages/JadwalAsistenPage'))
@@ -31,6 +32,11 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: <LoginPage />,
+    errorElement: <ErrorPage />
+  },
+  {
+    path: '/register',
+    element: <RegisterPage />,
     errorElement: <ErrorPage />
   },
   {

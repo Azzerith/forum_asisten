@@ -15,8 +15,8 @@ type RegisterInput struct {
 	Nama     string  `json:"nama" binding:"required"`
 	Email    string  `json:"email" binding:"required,email"`
 	Password string  `json:"password" binding:"required"`
-	Role     string  `json:"role" binding:"required"`
 	NIM      *string `json:"nim,omitempty"`
+	Telepon  *string `json:"telepon,omitempty"`
 }
 
 func Register(c *gin.Context) {
@@ -26,10 +26,10 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	if input.Role != "asisten" && input.Role != "admin" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Role tidak valid"})
-		return
-	}
+	// if input.Role != "asisten" && input.Role != "admin" {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Role tidak valid"})
+	// 	return
+	// }
 
 	hashedPassword, err := utils.HashPassword(input.Password)
 	if err != nil {
@@ -41,9 +41,10 @@ func Register(c *gin.Context) {
 		Nama:     input.Nama,
 		Email:    input.Email,
 		Password: hashedPassword,
-		Role:     input.Role,
+		Role:     "asisten",
 		NIM:      input.NIM,
-		Status:   "aktif",
+		Telepon:  input.Telepon,
+		Status:   "non-aktif",
 	}
 
 	if err := config.DB.Create(&user).Error; err != nil {
@@ -105,7 +106,10 @@ func Login(c *gin.Context) {
 			"role":   user.Role,
 			"status": user.Status,
 			"photo":  user.Photo,
+			"telepon":user.Telepon,
 		},
+		"message": "User berhasil dibuat",
+        "success": true,
 	})
 }
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Layout from "../../components/Layout";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiX, FiCheck, FiUser, FiMail, FiKey, FiLoader } from "react-icons/fi";
+import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiX, FiCheck, FiUser, FiMail, FiKey, FiLoader, FiPhone } from "react-icons/fi";
 
 export default function DataUser() {
   const [users, setUsers] = useState([]);
@@ -20,10 +20,12 @@ export default function DataUser() {
     email: "",
     password: "",
     role: "asisten",
-    status: "aktif"
+    status: "aktif",
+    telepon: "",
   });
   const [errors, setErrors] = useState({});
   const [currentUserRole, setCurrentUserRole] = useState('');
+  const [showPasswordField, setShowPasswordField] = useState(false);
 
   const token = localStorage.getItem("token");
 
@@ -65,7 +67,8 @@ export default function DataUser() {
       const filtered = users.filter(user =>
         user.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.nim.includes(searchTerm) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.telepon.includes(searchTerm)
       );
       setFilteredUsers(filtered);
     }
@@ -133,9 +136,16 @@ export default function DataUser() {
     } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
       newErrors.email = "Email tidak valid";
     }
-    if (!selectedUser && !formData.password.trim()) {
+    if (!formData.telepon.trim()) {
+      newErrors.telepon = "Nomor telepon wajib diisi";
+    } else if (!/^[0-9]+$/.test(formData.telepon)) {
+      newErrors.telepon = "Nomor telepon harus angka";
+    }
+    
+    // Only validate password if it's a new user or password field is shown for editing
+    if ((!selectedUser || showPasswordField) && !formData.password.trim()) {
       newErrors.password = "Password wajib diisi";
-    } else if (!selectedUser && formData.password.length < 6) {
+    } else if ((!selectedUser || showPasswordField) && formData.password.length < 6) {
       newErrors.password = "Password minimal 6 karakter";
     }
     
@@ -149,18 +159,25 @@ export default function DataUser() {
 
     setSubmitting(true);
     try {
+      const dataToSend = {
+        nama: formData.nama,
+        nim: formData.nim,
+        email: formData.email,
+        telepon: formData.telepon,
+        role: formData.role,
+        status: formData.status
+      };
+
+      // Include password only if it's a new user or password field is shown
+      if (!selectedUser || showPasswordField) {
+        dataToSend.password = formData.password;
+      }
+
       if (selectedUser) {
         // Update user
-        const updateData = {
-          nama: formData.nama,
-          nim: formData.nim,
-          email: formData.email,
-          role: formData.role,
-          status: formData.status
-        };
         await axios.put(
           `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/users/${selectedUser.id}`,
-          updateData,
+          dataToSend,
           { headers: getAuthHeaders() }
         );
         showSuccess("User berhasil diperbarui");
@@ -168,13 +185,14 @@ export default function DataUser() {
         // Create new user
         await axios.post(
           `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/users`,
-          formData,
+          dataToSend,
           { headers: getAuthHeaders() }
         );
         showSuccess("User berhasil ditambahkan");
       }
       fetchUsers();
       setShowForm(false);
+      setShowPasswordField(false);
     } catch (error) {
       let errorMessage = "Terjadi kesalahan saat menyimpan data";
       if (error.response) {
@@ -208,15 +226,18 @@ export default function DataUser() {
         nama: selectedUser.nama,
         nim: selectedUser.nim,
         email: selectedUser.email,
+        telepon: selectedUser.telepon,
         password: "",
         role: selectedUser.role,
         status: selectedUser.status
       });
+      setShowPasswordField(false);
     } else {
       setFormData({
         nama: "",
         nim: "",
         email: "",
+        telepon: "",
         password: "",
         role: "asisten",
         status: "aktif"
@@ -239,7 +260,8 @@ export default function DataUser() {
         <h3 className="font-medium text-gray-800 truncate">{user.nama || "-"}</h3>
         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
           <p className="text-sm text-gray-500">NIM: {user.nim}</p>
-          <p className="text-sm text-gray-500 hidden sm:inline">Email: {user.email}</p>
+          <p className="text-sm text-gray-500">Email: {user.email}</p>
+          <p className="text-sm text-gray-500 hidden sm:inline">Telp: {user.telepon}</p>
         </div>
       </div>
       
@@ -422,9 +444,41 @@ export default function DataUser() {
                   {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
                 </div>
 
-                {!selectedUser && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Telepon</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FiPhone className="text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      name="telepon"
+                      className={`pl-10 w-full p-3 border ${
+                        errors.telepon ? 'border-red-500' : 'border-gray-300'
+                      } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition`}
+                      value={formData.telepon}
+                      onChange={handleInputChange}
+                      disabled={submitting}
+                    />
+                  </div>
+                  {errors.telepon && <p className="mt-1 text-sm text-red-600">{errors.telepon}</p>}
+                </div>
+
+                {/* Password field - always shown for new user, toggleable for edit */}
+                {(!selectedUser || showPasswordField) && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-sm font-medium text-gray-700">Password</label>
+                      {selectedUser && (
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordField(false)}
+                          className="text-sm text-gray-500 hover:text-gray-700"
+                        >
+                          Sembunyikan
+                        </button>
+                      )}
+                    </div>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <FiKey className="text-gray-400" />
@@ -438,9 +492,22 @@ export default function DataUser() {
                         value={formData.password}
                         onChange={handleInputChange}
                         disabled={submitting}
+                        placeholder={selectedUser ? "Masukkan password baru" : ""}
                       />
                     </div>
                     {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+                  </div>
+                )}
+
+                {selectedUser && !showPasswordField && (
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswordField(true)}
+                      className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Ubah Password
+                    </button>
                   </div>
                 )}
 
@@ -456,7 +523,6 @@ export default function DataUser() {
                     >
                       <option value="asisten">Asisten</option>
                       <option value="admin">Admin</option>
-                      <option value="koordinator">Koordinator</option>
                     </select>
                   </div>
                   <div>
@@ -504,6 +570,7 @@ export default function DataUser() {
                     onClick={() => {
                       setShowForm(false);
                       setSelectedUser(null);
+                      setShowPasswordField(false);
                     }}
                     className="flex items-center justify-center px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors"
                     disabled={submitting}
