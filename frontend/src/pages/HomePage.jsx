@@ -218,6 +218,24 @@ export default function HomePage() {
           return scheduleDay === currentDay;
         });
 
+        const isWithinTimeRange = (schedule, minutesBefore = 0, minutesAfter = 0) => {
+          const today = new Date();
+          const currentDay = today.toLocaleDateString("id-ID", { weekday: "long" }).toLowerCase();
+          const currentTime = today.getHours() * 60 + today.getMinutes();
+          
+          const scheduleDay = schedule.jadwal?.hari?.toLowerCase() || schedule.hari?.toLowerCase();
+          if (scheduleDay !== currentDay) return false;
+          
+          const [startHour, startMinute] = (schedule.jadwal?.jam_mulai || schedule.jam_mulai).split(':').map(Number);
+          const [endHour, endMinute] = (schedule.jadwal?.jam_selesai || schedule.jam_selesai).split(':').map(Number);
+          
+          const scheduleStart = startHour * 60 + startMinute;
+          const scheduleEnd = endHour * 60 + endMinute;
+          
+          return (currentTime >= (scheduleStart - minutesBefore)) && 
+                 (currentTime <= (scheduleEnd + minutesAfter));
+        };
+
         // Generate announcements based on schedules
         const newAnnouncements = [];
         

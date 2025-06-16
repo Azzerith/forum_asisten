@@ -4,7 +4,10 @@ import (
 	"forum_asisten/config"
 	"forum_asisten/models"
 	"forum_asisten/utils"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -122,6 +125,37 @@ func GetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
+func GetUserByID(c *gin.Context) {
+    id := c.Param("id")
+    
+    var user models.User
+    if err := config.DB.First(&user, id).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{
+            "error":   "User tidak ditemukan",
+            "message": "Tidak ada user dengan ID tersebut",
+        })
+        return
+    }
+    
+    // You might want to omit sensitive fields like password
+    responseUser := gin.H{
+        "id":      user.ID,
+        "nama":    user.Nama,
+        "email":   user.Email,
+        "nim":     user.NIM,
+        "telepon": user.Telepon,
+        "role":    user.Role,
+        "status":  user.Status,
+        "photo":   user.Photo,
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "data":    responseUser,
+        "message": "User ditemukan",
+        "success": true,
+    })
+}
+
 func UpdateUser(c *gin.Context) {
 	id := c.Param("id")
 	var input models.User
@@ -143,6 +177,73 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "User berhasil diperbarui"})
+}
+
+func UpdateUserAsisten(c *gin.Context) {
+	id := c.Param("id")
+	
+	// Get the existing user first
+	var user models.User
+	if err := config.DB.First(&user, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
+		return
+	}
+
+	// Parse multipart form
+	if err := c.Request.ParseMultipartForm(10 << 20); err != nil { // 10 MB max
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ukuran file terlalu besar"})
+		return
+	}
+
+	// Handle text fields
+	updatedData := map[string]interface{}{
+		"nama":    c.PostForm("nama"),
+		"email":   c.PostForm("email"),
+		"nim":     c.PostForm("nim"),
+		"telepon": c.PostForm("telepon"),
+	}
+
+	// Handle file upload
+	file, header, err := c.Request.FormFile("photo")
+	if err == nil {
+		defer file.Close()
+
+		// Create uploads directory if not exists
+		if err := os.MkdirAll("uploads", os.ModePerm); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat direktori"})
+			return
+		}
+
+		// Create a new file in the uploads directory
+		filename := "user_" + id + filepath.Ext(header.Filename)
+		dst, err := os.Create(filepath.Join("uploads", filename))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan file"})
+			return
+		}
+		defer dst.Close()
+
+		// Copy the uploaded file to the filesystem
+		if _, err := io.Copy(dst, file); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyalin file"})
+			return
+		}
+
+		// Update photo path in database
+		photoPath := "/uploads/" + filename
+		updatedData["photo"] = &photoPath
+	}
+
+	// Update the user in database
+	if err := config.DB.Model(&user).Updates(updatedData).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "User berhasil diperbarui",
+		"data":    user,
+	})
 }
 
 // Tambahkan endpoint khusus untuk update status

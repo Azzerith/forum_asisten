@@ -37,6 +37,11 @@ func SetupRoutes(r *gin.Engine) {
 			protected.GET("/api/asisten-kelas/user/:user_id", controllers.GetJadwalAsistenById)
 			protected.GET("/rekapitulasi", controllers.GetRekapitulasi)
 
+			protected.POST("/users", controllers.Register)
+			protected.GET("/users", controllers.GetUsers)
+			protected.GET("/users/:id", controllers.GetUserByID)
+			protected.PUT("/users/:id", controllers.UpdateUserAsisten)
+
 		}
 		admin := api.Group("/admin")
 		admin.Use(middlewares.AuthMiddleware(), middlewares.AdminMiddleware())
