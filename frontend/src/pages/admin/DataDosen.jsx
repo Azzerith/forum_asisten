@@ -28,7 +28,7 @@ export default function DataDosen() {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get("http://localhost:8080/api/admin/dosen", {
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/dosen`, {
           headers: getAuthHeaders(),
         });
         setDosen(response.data || []);
@@ -60,7 +60,7 @@ export default function DataDosen() {
     if (!window.confirm("Yakin ingin menghapus data dosen ini?")) return;
     try {
       setSubmitting(true);
-      await axios.delete(`http://localhost:8080/api/admin/dosen/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/dosen/${id}`, {
         headers: getAuthHeaders(),
       });
       const updatedDosen = dosen.filter((d) => d.id !== id);
@@ -92,7 +92,7 @@ export default function DataDosen() {
     }
     try {
       setSubmitting(true);
-      await axios.put(`http://localhost:8080/api/admin/dosen/${editDosenId}`, formData, {
+      await axios.put(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/dosen/${editDosenId}`, formData, {
         headers: getAuthHeaders(),
       });
       const updatedDosen = dosen.map((d) => (d.id === editDosenId ? { ...d, ...formData } : d));
@@ -114,7 +114,7 @@ export default function DataDosen() {
     }
     try {
       setSubmitting(true);
-      const response = await axios.post("http://localhost:8080/api/admin/dosen", formData, {
+      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/dosen`, formData, {
         headers: getAuthHeaders(),
       });
       const updatedDosen = [...dosen, response.data];

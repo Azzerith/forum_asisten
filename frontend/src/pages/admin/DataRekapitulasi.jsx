@@ -68,12 +68,12 @@ const DataRekapitulasi = () => {
         setError(null);
         
         // Fetch presensi data
-        const presensiResponse = await axios.get('http://localhost:8080/api/admin/presensi', {
+        const presensiResponse = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/presensi`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         
         // Fetch rekapitulasi data
-        const rekapResponse = await axios.get('http://localhost:8080/api/admin/rekapitulasi', {
+        const rekapResponse = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/rekapitulasi`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         
@@ -278,7 +278,7 @@ const DataRekapitulasi = () => {
   const submitHonor = async () => {
     try {
       const response = await axios.post(
-        'http://localhost:8080/api/admin/rekapitulasi',
+        `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/rekapitulasi`,
         {
           asisten_id: parseInt(honorForm.asisten_id),
           tipe_honor: honorForm.tipe_honor
@@ -295,7 +295,7 @@ const DataRekapitulasi = () => {
       setHonorModal(false);
       
       // Refresh data
-      const rekapResponse = await axios.get('http://localhost:8080/api/admin/rekapitulasi', {
+      const rekapResponse = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/rekapitulasi`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       
@@ -316,7 +316,7 @@ const DataRekapitulasi = () => {
 const submitUpdate = async () => {
   try {
     await axios.put(
-      `http://localhost:8080/api/admin/rekapitulasi/${currentItem.asisten_id}`,
+      `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/rekapitulasi/${currentItem.asisten_id}`,
       {
         asisten_id: currentItem.asisten_id,
         tipe_honor: formData.tipe_honor,
@@ -334,7 +334,7 @@ const submitUpdate = async () => {
     setEditModal(false);
     
     // Refresh data
-    const rekapResponse = await axios.get('http://localhost:8080/api/admin/rekapitulasi', {
+    const rekapResponse = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/rekapitulasi`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     });
     

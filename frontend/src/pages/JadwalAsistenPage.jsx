@@ -42,7 +42,7 @@ export default function JadwalAsistenPage() {
         setError(null);
     
         const response = await axios.get(
-          "http://localhost:8080/api/asisten-kelas",
+          `${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,

@@ -6,8 +6,6 @@ import {
   FiCalendar, 
   FiBook, 
   FiUser, 
-  FiHome, 
-  FiAlertCircle,
   FiEdit,
   FiTrash2,
   FiPlus,
@@ -75,7 +73,7 @@ const [confirmData, setConfirmData] = useState({
       setError(null);
   
       const response = await axios.get(
-        "http://localhost:8080/api/admin/asisten-kelas",
+        `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/asisten-kelas`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -102,7 +100,7 @@ const [confirmData, setConfirmData] = useState({
 const fetchAvailableAssistants = async () => {
   try {
     const response = await axios.get(
-      "http://localhost:8080/api/admin/users",
+      `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/users`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -124,7 +122,7 @@ const fetchAvailableAssistants = async () => {
   const fetchAvailableSchedules = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:8080/api/admin/jadwal",
+        `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/jadwal`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -288,7 +286,7 @@ const fetchAvailableAssistants = async () => {
       console.log("Submitting payload:", payload);
       
       await axios.post(
-        "http://localhost:8080/api/admin/asisten-kelas",
+        `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/asisten-kelas`,
         payload, // Changed from formData to payload
         {
           headers: {
@@ -334,7 +332,7 @@ const fetchAvailableAssistants = async () => {
       });
   
       const response = await axios.delete(
-        `http://localhost:8080/api/admin/asisten-kelas/${scheduleId}/${assistantId}`,
+        `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/asisten-kelas/${scheduleId}/${assistantId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,

@@ -30,10 +30,10 @@ export default function AdminHomePage() {
 
         // Fetch all data in parallel
         const [usersRes, coursesRes, schedulesRes, presencesRes] = await Promise.all([
-          axios.get("http://localhost:8080/api/admin/users", { headers }),
-          axios.get("http://localhost:8080/api/admin/mata-kuliah", { headers }),
-          axios.get("http://localhost:8080/api/admin/jadwal", { headers }),
-          axios.get("http://localhost:8080/api/admin/presensi?limit=20", { headers })
+          axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/users`, { headers }),
+          axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/mata-kuliah`, { headers }),
+          axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/jadwal`, { headers }),
+          axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/presensi?limit=20`, { headers })
         ]);
 
         // Process users data

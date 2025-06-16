@@ -32,7 +32,7 @@ export default function ProfilePage() {
     if (!token) return;
     
     try {
-      const presensiResponse = await fetch('http://localhost:8080/api/presensi', {
+      const presensiResponse = await fetch(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/presensi`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

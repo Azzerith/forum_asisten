@@ -19,7 +19,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:8080/api/login", {
+      const res = await axios.post(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/login`, {
         identifier,
         password,
       });

@@ -81,17 +81,17 @@ export default function DataJadwal() {
         setError(null);
 
         // Fetch schedules
-        const schedulesRes = await axios.get("http://localhost:8080/api/admin/jadwal", {
+        const schedulesRes = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/jadwal`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         });
 
         // Fetch mata kuliah
-        const mataKuliahRes = await axios.get("http://localhost:8080/api/admin/mata-kuliah", {
+        const mataKuliahRes = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/mata-kuliah`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         });
 
         // Fetch dosen
-        const dosenRes = await axios.get("http://localhost:8080/api/admin/dosen", {
+        const dosenRes = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/dosen`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         });
 
@@ -217,7 +217,7 @@ export default function DataJadwal() {
       if (editMode) {
         // Update existing schedule
         await axios.put(
-          `http://localhost:8080/api/admin/jadwal/${currentSchedule.id}`,
+          `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/jadwal/${currentSchedule.id}`,
           payload,
           { 
             headers: { 
@@ -229,7 +229,7 @@ export default function DataJadwal() {
       } else {
         // Create new schedule
         await axios.post(
-          "http://localhost:8080/api/admin/jadwal",
+          `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/jadwal`,
           payload,
           { 
             headers: { 
@@ -241,7 +241,7 @@ export default function DataJadwal() {
       }
   
       // Refresh data
-      const response = await axios.get("http://localhost:8080/api/admin/jadwal", {
+      const response = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/jadwal`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setSchedules(response.data);
@@ -264,12 +264,12 @@ export default function DataJadwal() {
 
     try {
       setLoading(true);
-      await axios.delete(`http://localhost:8080/api/admin/jadwal/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/jadwal/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
 
       // Refresh data
-      const response = await axios.get("http://localhost:8080/api/admin/jadwal", {
+      const response = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/jadwal`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setSchedules(response.data);

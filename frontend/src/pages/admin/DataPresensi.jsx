@@ -79,7 +79,7 @@ export default function DataPresensi() {
         setLoading(true);
         setError(null);
 
-        const response = await axios.get("http://localhost:8080/api/admin/presensi", {
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/presensi`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         });
 
@@ -169,12 +169,12 @@ export default function DataPresensi() {
 
     try {
       setLoading(true);
-      await axios.delete(`http://localhost:8080/api/admin/presensi/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/presensi/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
 
       // Refresh data
-      const response = await axios.get("http://localhost:8080/api/admin/presensi", {
+      const response = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/presensi`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setPresensi(response.data);
@@ -209,7 +209,7 @@ export default function DataPresensi() {
       });
   
       const response = await axios.put(
-        `http://localhost:8080/api/admin/presensi/${id}`,
+        `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/presensi/${id}`,
         JSON.stringify({ status: tempStatus }), // Pastikan di-stringify
         {
           headers: { 

@@ -46,7 +46,7 @@ export default function DataUser() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://localhost:8080/api/admin/users", {
+      const response = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/users`, {
         headers: getAuthHeaders(),
       });
       setUsers(response.data || []);
@@ -76,7 +76,7 @@ export default function DataUser() {
     
     try {
       setSubmitting(true);
-      await axios.delete(`http://localhost:8080/api/admin/users/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/users/${id}`, {
         headers: getAuthHeaders(),
       });
       const updatedUsers = users.filter(u => u.id !== id);
@@ -96,7 +96,7 @@ export default function DataUser() {
     try {
       setSubmitting(true);
       await axios.put(
-        `http://localhost:8080/api/admin/users/${user.id}/status`,
+        `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/users/${user.id}/status`,
         { status: newStatus },
         { headers: getAuthHeaders() }
       );
@@ -159,7 +159,7 @@ export default function DataUser() {
           status: formData.status
         };
         await axios.put(
-          `http://localhost:8080/api/admin/users/${selectedUser.id}`,
+          `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/users/${selectedUser.id}`,
           updateData,
           { headers: getAuthHeaders() }
         );
@@ -167,7 +167,7 @@ export default function DataUser() {
       } else {
         // Create new user
         await axios.post(
-          "http://localhost:8080/api/admin/users",
+          `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/users`,
           formData,
           { headers: getAuthHeaders() }
         );

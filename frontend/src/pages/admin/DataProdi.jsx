@@ -28,7 +28,7 @@ export default function DataProdi() {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get("http://localhost:8080/api/admin/program-studi", {
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/program-studi`, {
           headers: getAuthHeaders(),
         });
         setProdi(response.data || []);
@@ -60,7 +60,7 @@ export default function DataProdi() {
     if (!window.confirm("Yakin ingin menghapus data Program Studi ini?")) return;
     try {
       setSubmitting(true);
-      await axios.delete(`http://localhost:8080/api/admin/program-studi/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/program-studi/${id}`, {
         headers: getAuthHeaders(),
       });
       const updatedProdi = Prodi.filter((d) => d.id !== id);
@@ -92,7 +92,7 @@ export default function DataProdi() {
     }
     try {
       setSubmitting(true);
-      await axios.put(`http://localhost:8080/api/admin/program-studi/${editProdiId}`, formData, {
+      await axios.put(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/program-studi/${editProdiId}`, formData, {
         headers: getAuthHeaders(),
       });
       const updatedProdi = Prodi.map((d) => (d.id === editProdiId ? { ...d, ...formData } : d));
@@ -114,7 +114,7 @@ export default function DataProdi() {
     }
     try {
       setSubmitting(true);
-      const response = await axios.post("http://localhost:8080/api/admin/program-studi", formData, {
+      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/program-studi`, formData, {
         headers: getAuthHeaders(),
       });
       const updatedProdi = [...Prodi, response.data];

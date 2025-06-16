@@ -29,7 +29,7 @@ export default function DataMataKuliah() {
     setIsLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:8080/api/admin/mata-kuliah", {
+      const response = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/mata-kuliah`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -52,7 +52,7 @@ export default function DataMataKuliah() {
   const fetchProgramStudi = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:8080/api/admin/program-studi", {
+      const response = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/program-studi`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -75,7 +75,7 @@ export default function DataMataKuliah() {
     
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:8080/api/admin/mata-kuliah/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/mata-kuliah/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMataKuliahList(prev => prev.filter(mk => mk.id !== id));
@@ -126,13 +126,13 @@ export default function DataMataKuliah() {
   
       if (selectedMataKuliah) {
         response = await axios.put(
-          `http://localhost:8080/api/admin/mata-kuliah/${selectedMataKuliah.id}`,
+          `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/mata-kuliah/${selectedMataKuliah.id}`,
           payload,
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
         response = await axios.post(
-          "http://localhost:8080/api/admin/mata-kuliah",
+          `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/mata-kuliah`,
           payload,
           { headers: { Authorization: `Bearer ${token}` } }
         );

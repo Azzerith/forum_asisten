@@ -54,12 +54,12 @@ const RekapitulasiPage = () => {
 
         // Fetch both data sources in parallel
         const [presensiResponse, rekapitulasiResponse] = await Promise.all([
-          fetch(`http://localhost:8080/api/presensi?asisten_id=${user.id}`, {
+          fetch(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/presensi?asisten_id=${user.id}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
           }),
-          fetch(`http://localhost:8080/api/rekapitulasi?asisten_id=${user.id}`, {
+          fetch(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/rekapitulasi?asisten_id=${user.id}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
             },

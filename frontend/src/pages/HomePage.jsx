@@ -35,7 +35,7 @@ export default function HomePage() {
         setActivitiesLoading(true);
         // Fetch user's recent presensi
         const presensiRes = await axios.get(
-          `http://localhost:8080/api/presensi?user_id=${user.user_id}&limit=3`,
+          `${import.meta.env.VITE_REACT_APP_BASEURL}/api/presensi?user_id=${user.user_id}&limit=3`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -45,7 +45,7 @@ export default function HomePage() {
 
         // Fetch user's recent jadwal assignments
         const jadwalRes = await axios.get(
-          `http://localhost:8080/api/asisten-kelas?user_id=${user.user_id}&limit=3`,
+          `${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas?user_id=${user.user_id}&limit=3`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -130,7 +130,7 @@ export default function HomePage() {
 
     const fetchSchedules = async () => {
       try {
-        const res = await axios.get("http://localhost:8080/api/asisten-kelas", {
+        const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },

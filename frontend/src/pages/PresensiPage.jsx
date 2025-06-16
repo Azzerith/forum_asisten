@@ -250,7 +250,7 @@ export default function PresensiPage() {
       };
   
       const response = await axios.post(
-        "http://localhost:8080/api/presensi",
+        `${import.meta.env.VITE_REACT_APP_BASEURL}/api/presensi`,
         presensiData,
         {
           headers: {
@@ -292,7 +292,7 @@ export default function PresensiPage() {
         setLoading(true);
         setError(null);
     
-        const res = await axios.get("http://localhost:8080/api/asisten-kelas", {
+        const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },

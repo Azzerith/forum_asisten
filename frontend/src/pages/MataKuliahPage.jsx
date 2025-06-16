@@ -75,10 +75,10 @@ export default function MataKuliahPage() {
       try {
         setLoading(true);
         const [schedulesRes, takenRes] = await Promise.all([
-          axios.get("http://localhost:8080/api/jadwal", {
+          axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/jadwal`, {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
           }),
-          axios.get("http://localhost:8080/api/asisten-kelas", {
+          axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas`, {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
           })
         ]);
@@ -100,10 +100,10 @@ export default function MataKuliahPage() {
     try {
       setLoading(true);
       const [schedulesRes, takenRes] = await Promise.all([
-        axios.get("http://localhost:8080/api/jadwal", {
+        axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/jadwal`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         }),
-        axios.get("http://localhost:8080/api/asisten-kelas", {
+        axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         })
       ]);
@@ -138,12 +138,12 @@ export default function MataKuliahPage() {
   
       // Construct proper URL
       await axios.delete(
-        `http://localhost:8080/api/asisten-kelas/${asistenKelas.jadwal.id}/${asistenKelas.user.id}`,
+        `${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas/${asistenKelas.jadwal.id}/${asistenKelas.user.id}`,
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
   
       // Refresh data
-      const takenRes = await axios.get("http://localhost:8080/api/asisten-kelas", {
+      const takenRes = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setTakenSchedules(takenRes.data);
@@ -332,7 +332,7 @@ export default function MataKuliahPage() {
 
     try {
       await axios.post(
-        "http://localhost:8080/api/asisten-kelas",
+        "${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas",
         {
           jadwal_id: schedule.id,
           user_id: user.id
@@ -352,7 +352,7 @@ export default function MataKuliahPage() {
       });
       
       // Refresh data
-      const response = await axios.get("http://localhost:8080/api/asisten-kelas", {
+      const response = await axios.get("${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`
         }
