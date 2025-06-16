@@ -33,14 +33,20 @@ export default function DataPlotingan() {
   const [availableAssistants, setAvailableAssistants] = useState([]);
   const [availableSchedules, setAvailableSchedules] = useState([]);
   const navigate = useNavigate();
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+const [confirmData, setConfirmData] = useState({
+  scheduleId: null,
+  assistantId: null,
+  assistantName: ""
+});
 
   // State for expanded groups
   const [expandedGroups, setExpandedGroups] = useState({});
 
   // Form state
   const [formData, setFormData] = useState({
-    JadwalID: "",
-    AsistenID: ""
+    jadwal_id: "",
+    asisten_id: ""
   });
 
   // Get user from token
@@ -238,27 +244,50 @@ const fetchAvailableAssistants = async () => {
 
   // Open edit modal
   const openEditModal = (schedule) => {
-    setCurrentSchedule(schedule);
-    setFormData({
-      jadwal_id: schedule.jadwal_id,
-      asisten_id: "" // Reset to empty to allow selecting new assistant
-    });
-    setShowModal(true);
+    try {
+      if (!schedule) {
+        throw new Error("Schedule object is undefined");
+      }
+  
+      // Try different possible locations for the ID
+      const jadwalId = schedule.jadwal_id || schedule.jadwal?.id || schedule.id;
+      
+      if (!jadwalId) {
+        throw new Error("Jadwal ID not found in schedule object");
+      }
+  
+      setCurrentSchedule(schedule);
+      setFormData({
+        jadwal_id: jadwalId.toString(),
+        asisten_id: ""
+      });
+      setShowModal(true);
+    } catch (error) {
+      console.error("Error opening edit modal:", error);
+      setError("Gagal memuat data jadwal: " + error.message);
+    }
   };
 
   // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.jadwal_id || !formData.asisten_id) {
+      setError("Harap pilih jadwal dan asisten");
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
       const payload = {
-        jadwal_id: Number(formData.JadwalID), // Convert to number
-        asisten_id: Number(formData.AsistenID) // Convert to number
+        jadwal_id: Number(formData.jadwal_id), // Convert to number
+        asisten_id: Number(formData.asisten_id) // Convert to number
       };
+
+      console.log("Submitting payload:", payload);
       
       if (currentSchedule) {
-        // Update existing schedule - add new assistant
         await axios.post(
           "http://localhost:8080/api/admin/asisten-kelas",
           payload,
@@ -289,6 +318,7 @@ const fetchAvailableAssistants = async () => {
       setShowModal(false);
     } catch (err) {
       console.error("Error saving schedule:", err);
+      console.error("Error response data:", err.response?.data);
       setError(err.response?.data?.error || "Gagal menyimpan jadwal asisten");
     } finally {
       setLoading(false);
@@ -296,10 +326,28 @@ const fetchAvailableAssistants = async () => {
   };
 
   // Handle remove assistant
-  const handleRemoveAssistant = async (scheduleId, assistantId) => {
+  const handleRemoveAssistant = (scheduleId, assistantId, assistantName) => {
+    setConfirmData({
+      scheduleId,
+      assistantId,
+      assistantName
+    });
+    setShowConfirmModal(true);
+  };
+
+  const confirmRemoveAssistant = async () => {
     try {
       setLoading(true);
-      await axios.delete(
+      setError(null);
+      
+      const { scheduleId, assistantId } = confirmData;
+  
+      console.log("Mengirim request delete dengan:", {
+        scheduleId,
+        assistantId
+      });
+  
+      const response = await axios.delete(
         `http://localhost:8080/api/admin/asisten-kelas/${scheduleId}/${assistantId}`,
         {
           headers: {
@@ -308,13 +356,27 @@ const fetchAvailableAssistants = async () => {
           }
         }
       );
-      setSuccessMessage("Asisten berhasil dihapus dari jadwal");
-      fetchSchedules();
+  
+      console.log("Response dari server:", response.data);
+  
+      if (response.data && response.data.message) {
+        setSuccessMessage(response.data.message);
+        fetchSchedules(); // Refresh data
+      } else {
+        setSuccessMessage("Asisten berhasil dihapus dari jadwal");
+        fetchSchedules();
+      }
     } catch (err) {
-      console.error("Error removing assistant:", err);
-      setError(err.response?.data?.error || "Gagal menghapus asisten dari jadwal");
+      console.error("Error saat menghapus asisten:", err);
+      setError(
+        err.response?.data?.error || 
+        err.response?.data?.message ||
+        err.message || 
+        "Gagal menghapus asisten dari jadwal"
+      );
     } finally {
       setLoading(false);
+      setShowConfirmModal(false);
     }
   };
 
@@ -503,7 +565,7 @@ const fetchAvailableAssistants = async () => {
                                             </div>
                                           </div>
                                           <button
-                                            onClick={() => handleRemoveAssistant(item.jadwal_id, asisten.id)}
+                                            onClick={() => handleRemoveAssistant(item.id, asisten.id, asisten.nama)}
                                             className="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50 transition-colors"
                                           >
                                             <FiTrash2 />
@@ -533,6 +595,45 @@ const fetchAvailableAssistants = async () => {
             ))
           )}
         </div>
+        {/* Confirmation Modal */}
+        {showConfirmModal && (
+          <div className="fixed inset-0 drop-shadow-2xl bg-opacity-30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+              <div className="flex justify-between items-center px-6 py-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Konfirmasi Penghapusan
+                </h3>
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <FiX className="h-6 w-6" />
+                </button>
+              </div>
+              <div className="p-6">
+                <p className="text-gray-700 mb-4">
+                  Apakah Anda yakin ingin menghapus asisten <span className="font-semibold">{confirmData.assistantName}</span> dari jadwal ini?
+                </p>
+                <div className="flex justify-end pt-4 border-t">
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmModal(false)}
+                    className="mr-3 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmRemoveAssistant}
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    <FiTrash2 className="inline mr-1" /> Hapus
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Add/Edit Modal */}
         {showModal && (
@@ -565,13 +666,19 @@ const fetchAvailableAssistants = async () => {
                     onChange={handleInputChange}
                     className="text-black w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     required
-                    disabled={currentSchedule} // Disable if editing existing schedule
+                    disabled={!!currentSchedule}
                   >
-                    <option value="">Pilih Jadwal</option>
-                    {availableSchedules.map(schedule => (
-                      <option key={schedule.id} value={schedule.id}>
-                        {schedule.mata_kuliah.nama} - {schedule.hari} {schedule.jam_mulai}-{schedule.jam_selesai}
-                      </option>
+                    {!currentSchedule ? (
+    <option value="">Pilih Jadwal</option>
+  ) : (
+    <option value={currentSchedule.jadwal_id}>
+      {currentSchedule.mata_kuliah.nama} - {currentSchedule.hari} {currentSchedule.jam_mulai}-{currentSchedule.jam_selesai}
+    </option>
+  )}
+  {!currentSchedule && availableSchedules.map(schedule => (
+    <option key={schedule.id} value={schedule.id}>
+      {schedule.mata_kuliah.nama} - {schedule.hari} {schedule.jam_mulai}-{schedule.jam_selesai}
+    </option>
                     ))}
                   </select>
                 </div>
