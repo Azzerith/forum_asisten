@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Layout from "../../components/Layout";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiClock, FiCalendar, FiBook, FiUser, FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { FiClock, FiCalendar, FiBook, FiUser, FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiChevronDown, FiChevronUp, FiSearch } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
 export default function DataJadwal() {
@@ -17,6 +17,8 @@ export default function DataJadwal() {
   const [dosenList, setDosenList] = useState([]);
   const navigate = useNavigate();
   const [successMessage, setSuccessMessage] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredSchedules, setFilteredSchedules] = useState([]);
 
   // Time slots and labs
   const timeSlots = [
@@ -94,6 +96,7 @@ export default function DataJadwal() {
         });
 
         setSchedules(schedulesRes.data);
+        setFilteredSchedules(schedulesRes.data);
         setMataKuliahList(mataKuliahRes.data);
         setDosenList(dosenRes.data);
       } catch (err) {
@@ -107,6 +110,11 @@ export default function DataJadwal() {
     fetchData();
   }, [user]);
 
+  useEffect(() => {
+    const filtered = filterSchedules(searchTerm);
+    setFilteredSchedules(filtered);
+  }, [searchTerm, schedules]);
+
   // Handle time slot selection
   const handleTimeSlotChange = (timeSlot) => {
     const [jam_mulai, jam_selesai] = timeSlot.split(" - ");
@@ -114,6 +122,25 @@ export default function DataJadwal() {
       ...formData,
       jam_mulai,
       jam_selesai
+    });
+  };
+
+  const filterSchedules = (term) => {
+    if (!term) {
+      return schedules;
+    }
+    
+    const lowerTerm = term.toLowerCase();
+    return schedules.filter(schedule => {
+      return (
+        (schedule.mata_kuliah?.nama?.toLowerCase().includes(lowerTerm)) ||
+        (schedule.mata_kuliah?.kode?.toLowerCase().includes(lowerTerm)) ||
+        (schedule.dosen?.nama?.toLowerCase().includes(lowerTerm)) ||
+        (schedule.kelas?.toLowerCase().includes(lowerTerm)) ||
+        (schedule.lab?.toLowerCase().includes(lowerTerm)) ||
+        (schedule.hari?.toLowerCase().includes(lowerTerm)) ||
+        (`${schedule.jam_mulai}-${schedule.jam_selesai}`.includes(lowerTerm))
+      );
     });
   };
 
@@ -260,7 +287,7 @@ export default function DataJadwal() {
   const groupSchedules = () => {
     const grouped = {};
     
-    schedules.forEach(schedule => {
+    filteredSchedules.forEach(schedule => {
       const programStudi = schedule.mata_kuliah?.program_studi?.nama || 'Lainnya';
       const semester = `Semester ${schedule.semester}`;
       
@@ -345,6 +372,7 @@ const showSuccess = (message) => {
             )}
           </AnimatePresence>
           </div>
+          
           <button 
             onClick={openAddModal}
             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -352,8 +380,21 @@ const showSuccess = (message) => {
             <FiPlus className="mr-2" /> Tambah Jadwal
           </button>
         </div>
-
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden space-y-2 overflow-y-auto" style={{ maxHeight: "555px" }}>
+        <div className="mb-6 relative">
+          <div className="relative max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FiSearch className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Cari jadwal, hari, dosen ..."
+              className="text-black block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          </div>
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden space-y-2 overflow-y-auto" style={{ maxHeight: "490px" }}>
             
           {Object.entries(groupedSchedules).map(([programStudi, semesters]) => (
             <div key={programStudi} className="mb-6">
