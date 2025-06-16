@@ -271,48 +271,34 @@ const fetchAvailableAssistants = async () => {
   // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     if (!formData.jadwal_id || !formData.asisten_id) {
       setError("Harap pilih jadwal dan asisten");
       return;
     }
-
+  
     try {
       setLoading(true);
       setError(null);
       const payload = {
-        jadwal_id: Number(formData.jadwal_id), // Convert to number
-        asisten_id: Number(formData.asisten_id) // Convert to number
+        jadwal_id: Number(formData.jadwal_id),
+        asisten_id: Number(formData.asisten_id)
       };
-
+  
       console.log("Submitting payload:", payload);
       
-      if (currentSchedule) {
-        await axios.post(
-          "http://localhost:8080/api/admin/asisten-kelas",
-          payload,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-              "Content-Type": "application/json"
-            }
+      await axios.post(
+        "http://localhost:8080/api/admin/asisten-kelas",
+        payload, // Changed from formData to payload
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json"
           }
-        );
-        setSuccessMessage("Asisten berhasil ditambahkan ke jadwal");
-      } else {
-        // Create new schedule
-        await axios.post(
-          "http://localhost:8080/api/admin/asisten-kelas",
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-              "Content-Type": "application/json"
-            }
-          }
-        );
-        setSuccessMessage("Jadwal asisten berhasil ditambahkan");
-      }
+        }
+      );
+  
+      setSuccessMessage("Asisten berhasil ditambahkan ke jadwal");
       setFormData({ jadwal_id: "", asisten_id: "" });
       fetchSchedules();
       setShowModal(false);
