@@ -28,6 +28,7 @@ export default function PresensiPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Modal components
   const SuccessModal = () => (
@@ -61,7 +62,7 @@ export default function PresensiPage() {
   );
 
   const ErrorModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
       <motion.div 
         className="bg-white p-6 rounded-xl max-w-md w-full mx-4"
         initial={{ opacity: 0, scale: 0.9 }}
@@ -162,8 +163,8 @@ export default function PresensiPage() {
       throw new Error('Hanya file gambar yang diperbolehkan');
     }
   
-    if (file.size > 5 * 1024 * 1024) {
-      throw new Error('Ukuran file terlalu besar (maksimal 5MB)');
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error('Ukuran file terlalu besar (maksimal 10MB)');
     }
   
     const formData = new FormData();
@@ -183,6 +184,7 @@ export default function PresensiPage() {
             const progress = Math.round(
               (progressEvent.loaded * 100) / progressEvent.total
             );
+            setUploadProgress(progress);
             console.log(`Upload progress: ${progress}%`);
           },
         }
@@ -200,6 +202,8 @@ export default function PresensiPage() {
         error.message || 
         'Gagal mengupload gambar'
       );
+    }finally {
+      setUploadProgress(0);
     }
   };
 
@@ -210,6 +214,7 @@ export default function PresensiPage() {
     
     setIsSubmitting(true);
     setError(null);
+    setUploadProgress(0);
     
     try {
       if (status === "hadir" && !fileKehadiran) {
@@ -227,6 +232,9 @@ export default function PresensiPage() {
       } else if (status === "izin") {
         buktiIzinUrl = await uploadToCloudinary(fileIzin);
       }
+
+      // Show "Mengirim data..." message
+      setUploadProgress(-1);
   
       const presensiData = {
         jadwal_id: jadwalToUse.jadwal?.id || jadwalToUse.id,
@@ -271,6 +279,7 @@ export default function PresensiPage() {
       setError(errorMsg);
     } finally {
       setIsSubmitting(false);
+      setUploadProgress(0);
     }
   };
 
@@ -416,11 +425,39 @@ export default function PresensiPage() {
       </Layout>
     );
   }
+  const ProgressBar = ({ progress, message }) => (
+    <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-xl max-w-md w-full mx-4">
+        <h3 className="text-xl font-semibold mb-4 text-gray-800">
+          {progress === 100 ? "Mengirim Data..." : "Mengupload Data..."}
+        </h3>
+        <p className="text-gray-600 mb-4">{message}</p>
+        
+        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+          <div 
+            className={`h-2.5 rounded-full ${
+              progress === 100 ? "bg-green-500" : "bg-blue-600"
+            }`} 
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+        <p className="text-center text-gray-600">
+          {progress === 100 ? "Mengirim..." : `${progress}% selesai`}
+        </p>
+      </div>
+    </div>
+  );
 
   return (
     <Layout>
       {showSuccessModal && <SuccessModal />}
       {showErrorModal && <ErrorModal />}
+      {(uploadProgress > 0 || uploadProgress === -1) && (
+      <ProgressBar 
+        progress={uploadProgress === -1 ? 100 : uploadProgress} 
+        message={uploadProgress === -1 ? "Mengirim data presensi ke server..." : "Mengupload bukti presensi..."}
+      />
+    )}
 
       <main className="flex-1 p-6">
         {/* Tombol Presensi Lain */}

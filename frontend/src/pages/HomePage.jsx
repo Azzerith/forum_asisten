@@ -257,10 +257,10 @@ export default function HomePage() {
         {/* Announcements Grid */}
         <section className="mb-8 sm:mb-10">
           <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {announcements.map((item, index) => (
-              <motion.article
+          {announcements.map((item, index) => (
+            <motion.article
               key={index}
-              className="relative bg-gradient-to-r from-pink-600 to-violet-900 text-white p-5 rounded-xl shadow-lg overflow-hidden z-0"
+              className={`relative ${item.urgent ? 'bg-gradient-to-r from-pink-600 to-violet-900' : 'bg-gradient-to-r from-blue-600 to-indigo-700'} text-white p-5 rounded-xl shadow-lg overflow-hidden z-0`}
               style={{ maxWidth: "400px" }}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -273,7 +273,7 @@ export default function HomePage() {
                   <h2 className="text-lg font-semibold">{item.title}</h2>
                 </div>
                 <p className="text-xs md:text-sm opacity-90 mb-4">{item.description}</p>
-                {item.urgent && (
+                {item.urgent ? (
                   <motion.button
                     className="flex items-center gap-1 text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full transition-colors"
                     whileHover={{ scale: 1.05 }}
@@ -282,10 +282,21 @@ export default function HomePage() {
                   >
                     Presensi Sekarang <FiArrowUpRight className="text-xs" />
                   </motion.button>
+                ) : (
+                  <motion.button
+                    className="flex items-center gap-1 text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Lihat Detail <FiArrowUpRight className="text-xs" />
+                  </motion.button>
                 )}
-                </div>
+              </div>
+              
+              {/* Hanya tampilkan efek shimmer untuk notifikasi urgent */}
+              {item.urgent && (
                 <div className="absolute inset-0 overflow-hidden z-1">
-                 <style jsx>{`
+                  <style jsx>{`
                     &::before {
                       content: '';
                       position: absolute;
@@ -309,9 +320,10 @@ export default function HomePage() {
                       }
                     }
                   `}</style>
-                  </div>
-              </motion.article>
-            ))}
+                </div>
+              )}
+            </motion.article>
+          ))}
           </div>
         </section>
 
