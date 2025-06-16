@@ -332,7 +332,7 @@ export default function MataKuliahPage() {
 
     try {
       await axios.post(
-        "${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas",
+        `${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas`,
         {
           jadwal_id: schedule.id,
           user_id: user.id
@@ -352,7 +352,7 @@ export default function MataKuliahPage() {
       });
       
       // Refresh data
-      const response = await axios.get("${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas", {
+      const response = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/asisten-kelas`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`
         }

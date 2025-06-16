@@ -95,7 +95,7 @@ export default function PresensiPage() {
         const token = localStorage.getItem("token");
         if (token) {
           const payload = JSON.parse(atob(token.split(".")[1]));
-          console.log("Token payload:", payload);
+          // console.log("Token payload:", payload);
           const userData = { user_id: payload.user_id, ...payload };
           setUser(userData);
           
@@ -300,7 +300,7 @@ export default function PresensiPage() {
     
         const allJadwalData = Array.isArray(res.data) ? res.data : [res.data];
         setAllJadwal(allJadwalData);
-        console.log("All jadwal:", allJadwalData);
+        // console.log("All jadwal:", allJadwalData);
     
         const userJadwal = allJadwalData.filter((item) => 
           item.asisten_id === Number(user.user_id) || 
@@ -339,7 +339,7 @@ export default function PresensiPage() {
           }
         }
         
-        console.log("Current jadwal:", currentJadwal);
+        // console.log("Current jadwal:", currentJadwal);
         if (currentJadwal) {
           setJadwal(currentJadwal);
           setJadwalDipilih(true);
