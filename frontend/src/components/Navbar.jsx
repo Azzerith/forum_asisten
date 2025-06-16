@@ -39,7 +39,7 @@ export function Navbar({ toggleSidebar }) {
             <FiMenu className="h-6 w-6" />
           </button>
           
-          <h1 className="text-xl font-semibold text-white">
+          <h1 className="text-xl font-semibold text-white md:ml-50">
             {pageTitle}
           </h1>
         </div>
