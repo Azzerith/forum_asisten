@@ -73,8 +73,8 @@ func SetupRoutes(r *gin.Engine) {
 			admin.DELETE("/asisten-kelas/:jadwal_id/:asisten_id", controllers.DeleteAsistenFromJadwal)
 
 			admin.GET("/presensi", controllers.GetAllPresensi)
-			admin.PUT("presensi/:id", controllers.UpdatePresensi)
-			admin.DELETE("presensi/:id", controllers.DeletePresensi)
+			admin.PUT("/presensi/:id", controllers.UpdatePresensi)
+			admin.DELETE("/presensi/:id", controllers.DeletePresensi)
 
 			admin.GET("/rekapitulasi", controllers.GetRekapitulasi)
 			admin.POST("/rekapitulasi", controllers.SetTipeHonor)

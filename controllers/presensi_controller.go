@@ -113,57 +113,47 @@ func GetAllPresensi(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 func UpdatePresensi(c *gin.Context) {
-    // Get presensi ID from URL parameter
+    // [1] Ambil ID presensi dan validasi
     presensiID := c.Param("id")
     if presensiID == "" {
         c.JSON(http.StatusBadRequest, gin.H{"error": "ID presensi harus disertakan"})
         return
     }
 
-    // Get user ID from token (context)
-    userIDVal, exists := c.Get("user_id")
-    if !exists {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID tidak ditemukan"})
+    // [2] Cek role admin
+    role := c.GetString("role")
+    if role != "admin" {
+        c.JSON(http.StatusForbidden, gin.H{"error": "Hanya admin yang dapat mengupdate presensi"})
         return
     }
 
-    userIDFloat, ok := userIDVal.(float64)
-    if !ok {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID token tidak valid"})
-        return
+    // [3] Bind input
+    type UpdateInput struct {
+        Status string `json:"status" binding:"required,oneof=hadir izin alpha"`
     }
-    userID := uint(userIDFloat)
-
-    // Check if presensi exists and belongs to the user
-    var existingPresensi models.Presensi
-    if err := config.DB.Where("id = ? AND asisten_id = ?", presensiID, userID).First(&existingPresensi).Error; err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "Presensi tidak ditemukan atau tidak memiliki akses"})
+    
+    var input UpdateInput
+    if err := c.ShouldBindJSON(&input); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{
+            "error": "Invalid input",
+            "details": err.Error(),
+        })
         return
-    }
-
-    // Binding input
-    var input struct {
-        Jenis  string `json:"jenis"`  // "utama" | "pengganti"
-        Status string `json:"status"` // "hadir" | "izin" | "alpha"
     }
     
     if err := c.ShouldBindJSON(&input); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid", "detail": err.Error()})
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
         return
     }
 
-    // Validate input
-    if input.Jenis != "utama" && input.Jenis != "pengganti" {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Jenis presensi harus 'utama' atau 'pengganti'"})
+    // [4] Validasi status
+    validStatus := map[string]bool{"hadir": true, "izin": true, "alpha": true}
+    if !validStatus[input.Status] {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Status tidak valid"})
         return
     }
 
-    if input.Status != "hadir" && input.Status != "izin" && input.Status != "alpha" {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Status presensi harus 'hadir', 'izin', atau 'alpha'"})
-        return
-    }
-
-    // Start transaction to update presensi and rekapitulasi
+    // [5] Mulai transaction
     tx := config.DB.Begin()
     defer func() {
         if r := recover(); r != nil {
@@ -171,45 +161,53 @@ func UpdatePresensi(c *gin.Context) {
         }
     }()
 
-    // Update presensi
-    existingPresensi.Jenis = input.Jenis
-    existingPresensi.Status = input.Status
-    
-    if err := tx.Save(&existingPresensi).Error; err != nil {
+    // [6] Ambil data presensi lama (untuk mengetahui status sebelumnya)
+    var presensi models.Presensi
+    if err := tx.Where("id = ?", presensiID).First(&presensi).Error; err != nil {
         tx.Rollback()
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui presensi"})
+        c.JSON(http.StatusNotFound, gin.H{"error": "Presensi tidak ditemukan"})
         return
     }
 
-    // Update rekapitulasi
-    var rekap models.Rekapitulasi
-    if err := tx.Where("asisten_id = ?", userID).First(&rekap).Error; err != nil {
+    oldStatus := presensi.Status
+    presensi.Status = input.Status
+
+    // [7] Simpan perubahan presensi
+    if err := tx.Save(&presensi).Error; err != nil {
         tx.Rollback()
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menemukan rekapitulasi"})
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan presensi"})
         return
     }
 
-    // Recalculate counts based on all presensi records
-    var presensis []models.Presensi
-    if err := tx.Where("asisten_id = ?", userID).Find(&presensis).Error; err != nil {
-        tx.Rollback()
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghitung ulang rekapitulasi"})
-        return
-    }
+    // [8] Update rekapitulasi HANYA jika status berubah
+    if oldStatus != input.Status {
+        var rekap models.Rekapitulasi
+        if err := tx.Where("asisten_id = ?", presensi.AsistenID).First(&rekap).Error; err != nil {
+            tx.Rollback()
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Data rekapitulasi tidak ditemukan"})
+            return
+        }
 
-    // Reset counters
-    rekap.JumlahHadir = 0
-    rekap.JumlahPengganti = 0
-    rekap.JumlahIzin = 0
-    rekap.JumlahAlpha = 0
-
-    // Recalculate
-    for _, p := range presensis {
-        switch p.Status {
+        // [9] Kurangi counter status lama
+        switch oldStatus {
         case "hadir":
-            if p.Jenis == "utama" {
+            if presensi.Jenis == "utama" {
+                rekap.JumlahHadir--
+            } else {
+                rekap.JumlahPengganti--
+            }
+        case "izin":
+            rekap.JumlahIzin--
+        case "alpha":
+            rekap.JumlahAlpha--
+        }
+
+        // [10] Tambahkan counter status baru
+        switch input.Status {
+        case "hadir":
+            if presensi.Jenis == "utama" {
                 rekap.JumlahHadir++
-            } else if p.Jenis == "pengganti" {
+            } else {
                 rekap.JumlahPengganti++
             }
         case "izin":
@@ -217,21 +215,23 @@ func UpdatePresensi(c *gin.Context) {
         case "alpha":
             rekap.JumlahAlpha++
         }
+
+        // [11] Hitung ulang total honor
+        rekap.TotalHonor = rekap.HonorPertemuan * (rekap.JumlahHadir + rekap.JumlahPengganti)
+
+        if err := tx.Save(&rekap).Error; err != nil {
+            tx.Rollback()
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal update rekapitulasi"})
+            return
+        }
     }
 
-    rekap.TotalHonor = rekap.HonorPertemuan * (rekap.JumlahHadir + rekap.JumlahPengganti)
-
-    if err := tx.Save(&rekap).Error; err != nil {
-        tx.Rollback()
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui rekapitulasi"})
-        return
-    }
-
+    // [12] Commit transaksi jika semua berhasil
     tx.Commit()
 
     c.JSON(http.StatusOK, gin.H{
-        "message": "Presensi berhasil diperbarui",
-        "data":    existingPresensi,
+        "message": "Status presensi berhasil diperbarui",
+        "data":    presensi,
     })
 }
 

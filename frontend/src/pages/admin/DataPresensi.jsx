@@ -41,7 +41,7 @@ export default function DataPresensi() {
   const statusOptions = [
     { value: "hadir", label: "Hadir", color: "bg-green-100 text-green-800" },
     { value: "izin", label: "Izin", color: "bg-yellow-100 text-yellow-800" },
-    { value: "alfa", label: "Alfa", color: "bg-red-100 text-red-800" }
+    { value: "alpha", label: "Alpha", color: "bg-red-100 text-red-800" }
   ];
 
   // Check authentication
@@ -200,15 +200,29 @@ export default function DataPresensi() {
   const saveStatusEdit = async (id) => {
     try {
       setLoading(true);
-      await axios.put(
+      
+      // Debug: log data sebelum dikirim
+      console.log("Data yang akan dikirim:", {
+        id,
+        status: tempStatus,
+        token: localStorage.getItem("token")
+      });
+  
+      const response = await axios.put(
         `http://localhost:8080/api/admin/presensi/${id}`,
-        { status: tempStatus },
+        JSON.stringify({ status: tempStatus }), // Pastikan di-stringify
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          headers: { 
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          }
         }
       );
-
-      // Update local state
+  
+      console.log("Response sukses:", response.data);
+      
+      // Update state
       const updated = presensi.map(item => 
         item.id === id ? { ...item, status: tempStatus } : item
       );
@@ -216,10 +230,25 @@ export default function DataPresensi() {
       
       setEditingStatus(null);
       setTempStatus("");
-      showSuccess("Status presensi berhasil diperbarui");
+      showSuccess("Status berhasil diperbarui");
     } catch (err) {
-      console.error("Update status error:", err);
-      showError(err.response?.data?.message || "Gagal memperbarui status");
+      console.error("Error detail:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        config: err.config
+      });
+      
+      let errorMessage = "Gagal memperbarui status";
+      if (err.response?.status === 401) {
+        errorMessage = "Sesi habis, silakan login kembali";
+        localStorage.removeItem("token");
+        navigate("/login");
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      }
+      
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
