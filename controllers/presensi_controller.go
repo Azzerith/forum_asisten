@@ -243,28 +243,7 @@ func DeletePresensi(c *gin.Context) {
         return
     }
 
-    // Get user ID from token (context)
-    userIDVal, exists := c.Get("user_id")
-    if !exists {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID tidak ditemukan"})
-        return
-    }
-
-    userIDFloat, ok := userIDVal.(float64)
-    if !ok {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID token tidak valid"})
-        return
-    }
-    userID := uint(userIDFloat)
-
-    // Check if presensi exists and belongs to the user
-    var existingPresensi models.Presensi
-    if err := config.DB.Where("id = ? AND asisten_id = ?", presensiID, userID).First(&existingPresensi).Error; err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "Presensi tidak ditemukan atau tidak memiliki akses"})
-        return
-    }
-
-    // Start transaction to delete presensi and update rekapitulasi
+    // Start transaction
     tx := config.DB.Begin()
     defer func() {
         if r := recover(); r != nil {
@@ -272,24 +251,35 @@ func DeletePresensi(c *gin.Context) {
         }
     }()
 
+    // Check if presensi exists
+    var presensi models.Presensi
+    if err := tx.Where("id = ?", presensiID).First(&presensi).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusNotFound, gin.H{"error": "Presensi tidak ditemukan"})
+        return
+    }
+
     // Delete presensi
-    if err := tx.Delete(&existingPresensi).Error; err != nil {
+    if err := tx.Delete(&presensi).Error; err != nil {
         tx.Rollback()
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghapus presensi"})
         return
     }
 
-    // Update rekapitulasi
+    // Update rekapitulasi - use presensi.AsistenID instead of userID
     var rekap models.Rekapitulasi
-    if err := tx.Where("asisten_id = ?", userID).First(&rekap).Error; err != nil {
+    if err := tx.Where("asisten_id = ?", presensi.AsistenID).First(&rekap).Error; err != nil {
         tx.Rollback()
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menemukan rekapitulasi"})
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "error": "Gagal menemukan rekapitulasi",
+            "details": err.Error(),
+        })
         return
     }
 
     // Recalculate counts based on remaining presensi records
     var presensis []models.Presensi
-    if err := tx.Where("asisten_id = ?", userID).Find(&presensis).Error; err != nil {
+    if err := tx.Where("asisten_id = ?", presensi.AsistenID).Find(&presensis).Error; err != nil {
         tx.Rollback()
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghitung ulang rekapitulasi"})
         return
