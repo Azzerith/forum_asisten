@@ -36,6 +36,8 @@ export default function DataPresensi() {
   const [editingStatus, setEditingStatus] = useState(null);
   const [tempStatus, setTempStatus] = useState("");
   const navigate = useNavigate();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [presensiToDelete, setPresensiToDelete] = useState(null);
 
   // Status options
   const statusOptions = [
@@ -178,10 +180,17 @@ export default function DataPresensi() {
       // Update state after successful delete
       setPresensi(presensi.filter(item => item.id !== id));
       showSuccess("Presensi berhasil dihapus");
+      setShowDeleteModal(false);
     } catch (err) {
       console.error("Delete error:", err);
       showError(err.response?.data?.error || "Gagal menghapus presensi");
+      setShowDeleteModal(false);
     }
+  };
+
+  const confirmDelete = (id) => {
+    setPresensiToDelete(id);
+    setShowDeleteModal(true);
   };
 
   const handleStatusEdit = (presensi) => {
@@ -494,7 +503,7 @@ export default function DataPresensi() {
                                   <FiEye className="inline mr-1" /> Detail
                                 </button>
                                 <button
-                                  onClick={() => handleDelete(item.id)}
+                                  onClick={() => confirmDelete(item.id)}
                                   className="text-red-600 hover:text-red-900"
                                 >
                                   <FiTrash2 className="inline mr-1" /> Hapus
@@ -672,6 +681,29 @@ export default function DataPresensi() {
             </div>
           </div>
         )}
+        {showDeleteModal && (
+    <div className="fixed inset-0 drop-shadow-2xl bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full">
+        <h3 className="text-lg font-semibold mb-4">Konfirmasi Hapus</h3>
+        <p className="mb-6">Apakah Anda yakin ingin menghapus presensi ini?</p>
+        
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={() => setShowDeleteModal(false)}
+            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Batal
+          </button>
+          <button
+            onClick={() => handleDelete(presensiToDelete)}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+          >
+            Hapus
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
       </main>
     </Layout>
   );
