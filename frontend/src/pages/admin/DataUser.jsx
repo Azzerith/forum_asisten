@@ -22,10 +22,16 @@ export default function DataUser() {
     role: "asisten",
     status: "aktif",
     telepon: "",
+    photo: "",
   });
   const [errors, setErrors] = useState({});
   const [currentUserRole, setCurrentUserRole] = useState('');
   const [showPasswordField, setShowPasswordField] = useState(false);
+  const [photoModal, setPhotoModal] = useState({
+    show: false,
+    photoUrl: "",
+    userName: ""
+  });
 
   const token = localStorage.getItem("token");
 
@@ -118,6 +124,29 @@ export default function DataUser() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    const handlePhotoChange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+    
+      try {
+        // Upload ke Cloudinary
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'forum_asisten');
+        
+        const response = await axios.post(
+          'https://api.cloudinary.com/v1_1/azzerith/upload',
+          formData
+        );
+    
+        setFormData(prev => ({
+          ...prev,
+          photo: response.data.secure_url
+        }));
+      } catch (error) {
+        showError("Gagal mengupload foto");
+      }
+    };
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -165,7 +194,8 @@ export default function DataUser() {
         email: formData.email,
         telepon: formData.telepon,
         role: formData.role,
-        status: formData.status
+        status: formData.status,
+        photo: formData.photo
       };
 
       // Include password only if it's a new user or password field is shown
@@ -256,6 +286,32 @@ export default function DataUser() {
       transition={{ duration: 0.2 }}
       className="py-4 flex justify-between items-center hover:bg-gray-50 px-3 rounded-lg transition-colors"
     >
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+      {/* Foto Profil */}
+      <div className="relative flex-shrink-0 cursor-pointer" onClick={() => {
+          setPhotoModal({
+            show: true,
+            photoUrl: user.photo,
+            userName: user.nama
+          });
+        }}>
+          <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
+            {user.photo ? (
+              <img 
+                src={user.photo} 
+                alt={user.nama} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <FiUser className="text-gray-500 w-5 h-5" />
+            )}
+          </div>
+        {user.status.toLowerCase() === "aktif" ? (
+          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+        ) : (
+          <div className="absolute bottom-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
+        )}
+      </div>
       <div className="flex-1 min-w-0">
         <h3 className="font-medium text-gray-800 truncate">{user.nama || "-"}</h3>
         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
@@ -264,7 +320,7 @@ export default function DataUser() {
           <p className="text-sm text-gray-500 hidden sm:inline">Telp: {user.telepon}</p>
         </div>
       </div>
-      
+      </div>
       <div className="flex items-center gap-4">
         {currentUserRole === 'admin' && (
           <div className="flex items-center space-x-2">
@@ -313,6 +369,52 @@ export default function DataUser() {
   return (
     <Layout>
       <main className="flex-1 p-4 md:p-6 overflow-auto">
+      <AnimatePresence>
+          {photoModal.show && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center drop-shadow-2xl bg-opacity-30 backdrop-blur-sm p-4"
+              onClick={() => setPhotoModal({ show: false, photoUrl: "", userName: "" })}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Foto Profil {photoModal.userName}
+                    </h3>
+                    <button
+                      onClick={() => setPhotoModal({ show: false, photoUrl: "", userName: "" })}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <FiX size={24} />
+                    </button>
+                  </div>
+                  <div className="flex justify-center">
+                    {photoModal.photoUrl ? (
+                      <img
+                        src={photoModal.photoUrl}
+                        alt={`Profil ${photoModal.userName}`}
+                        className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-64 h-64 bg-gray-200 rounded-full flex items-center justify-center">
+                        <FiUser className="text-gray-500 w-32 h-32" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}

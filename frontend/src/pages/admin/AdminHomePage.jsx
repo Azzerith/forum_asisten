@@ -59,7 +59,7 @@ export default function AdminHomePage() {
         // Update stats
         setStats([
           { 
-            title: "Total Asisten", 
+            title: "Total Asisten Aktif", 
             value: activeAssistants.toString(), 
             change: "+0%", 
             trend: "neutral" 

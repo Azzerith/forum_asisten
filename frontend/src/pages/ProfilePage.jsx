@@ -170,7 +170,6 @@ const [error, setError] = useState({ show: false, message: '' });
     }
   
     try {
-      setLoading(true);
       
       // Jika ada file foto baru, upload ke Cloudinary
       let photoUrl = user.photo; // Gunakan foto lama sebagai default
@@ -243,7 +242,6 @@ const [error, setError] = useState({ show: false, message: '' });
       });
       setSuccess({ show: false, message: '' });
     } finally {
-      setLoading(false);
     }
   };
 
