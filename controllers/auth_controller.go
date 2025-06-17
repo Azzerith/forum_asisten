@@ -180,70 +180,76 @@ func UpdateUser(c *gin.Context) {
 }
 
 func UpdateUserAsisten(c *gin.Context) {
-	id := c.Param("id")
-	
-	// Get the existing user first
-	var user models.User
-	if err := config.DB.First(&user, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
-		return
-	}
+    id := c.Param("id")
+    
+    // Get the existing user first
+    var user models.User
+    if err := config.DB.First(&user, id).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
+        return
+    }
 
-	// Parse multipart form
-	if err := c.Request.ParseMultipartForm(10 << 20); err != nil { // 10 MB max
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Ukuran file terlalu besar"})
-		return
-	}
+    // Parse form data (support both multipart and urlencoded)
+    if err := c.Request.ParseMultipartForm(10 << 20); err != nil && err != http.ErrNotMultipart {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Gagal parsing form data"})
+        return
+    }
 
-	// Handle text fields
-	updatedData := map[string]interface{}{
-		"nama":    c.PostForm("nama"),
-		"email":   c.PostForm("email"),
-		"nim":     c.PostForm("nim"),
-		"telepon": c.PostForm("telepon"),
-	}
+    // Handle text fields
+    updatedData := map[string]interface{}{
+        "nama":    c.PostForm("nama"),
+        "email":   c.PostForm("email"),
+        "nim":     c.PostForm("nim"),
+        "telepon": c.PostForm("telepon"),
+    }
 
-	// Handle file upload
-	file, header, err := c.Request.FormFile("photo")
-	if err == nil {
-		defer file.Close()
+    // Handle photo - bisa berupa file upload atau URL string
+    photoUrl := c.PostForm("photo") // Untuk URL dari Cloudinary
+    
+    // Jika ada file upload, proses upload lokal
+    file, header, err := c.Request.FormFile("photo")
+    if err == nil {
+        defer file.Close()
 
-		// Create uploads directory if not exists
-		if err := os.MkdirAll("uploads", os.ModePerm); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat direktori"})
-			return
-		}
+        // Create uploads directory if not exists
+        if err := os.MkdirAll("uploads", os.ModePerm); err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat direktori"})
+            return
+        }
 
-		// Create a new file in the uploads directory
-		filename := "user_" + id + filepath.Ext(header.Filename)
-		dst, err := os.Create(filepath.Join("uploads", filename))
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan file"})
-			return
-		}
-		defer dst.Close()
+        // Create a new file in the uploads directory
+        filename := "user_" + id + filepath.Ext(header.Filename)
+        dst, err := os.Create(filepath.Join("uploads", filename))
+        if err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan file"})
+            return
+        }
+        defer dst.Close()
 
-		// Copy the uploaded file to the filesystem
-		if _, err := io.Copy(dst, file); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyalin file"})
-			return
-		}
+        // Copy the uploaded file to the filesystem
+        if _, err := io.Copy(dst, file); err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyalin file"})
+            return
+        }
 
-		// Update photo path in database
-		photoPath := "/uploads/" + filename
-		updatedData["photo"] = &photoPath
-	}
+        // Update photo path in database
+        photoPath := "/uploads/" + filename
+        updatedData["photo"] = photoPath
+    } else if photoUrl != "" {
+        // Jika ada URL dari Cloudinary, gunakan itu
+        updatedData["photo"] = photoUrl
+    }
 
-	// Update the user in database
-	if err := config.DB.Model(&user).Updates(updatedData).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui user"})
-		return
-	}
+    // Update the user in database
+    if err := config.DB.Model(&user).Updates(updatedData).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui user"})
+        return
+    }
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "User berhasil diperbarui",
-		"data":    user,
-	})
+    c.JSON(http.StatusOK, gin.H{
+        "message": "User berhasil diperbarui",
+        "data":    user,
+    })
 }
 
 // Tambahkan endpoint khusus untuk update status

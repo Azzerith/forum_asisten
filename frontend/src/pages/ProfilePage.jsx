@@ -172,18 +172,32 @@ const [error, setError] = useState({ show: false, message: '' });
     try {
       setLoading(true);
       
+      // Jika ada file foto baru, upload ke Cloudinary
+      let photoUrl = user.photo; // Gunakan foto lama sebagai default
+      if (editData.photo instanceof File) {
+        photoUrl = await uploadToCloudinary(editData.photo);
+      }
+  
+      // Persiapkan data untuk dikirim ke API
       const formData = new FormData();
       formData.append('nama', editData.nama);
       formData.append('email', editData.email);
-      formData.append('nim', editData.nim || '');
-      formData.append('telepon', editData.telepon || '');
+      formData.append('nim', editData.nim);
+      formData.append('telepon', editData.telepon);
+      formData.append('photo', photoUrl || '');
+      
+      // Jika ada foto baru, tambahkan URL-nya
+      // if (photoUrl) {
+      //   formData.append('photo', photoUrl);
+      // }
   
-      // If photo is a file (new upload), add it to formData
-      if (editData.photo instanceof File) {
-        formData.append('photo', editData.photo);
-      } else if (typeof editData.photo === 'string') {
-        formData.append('photo_url', editData.photo);
-      }
+      console.log('Data to send:', {
+        nama: editData.nama,
+        email: editData.email,
+        nim: editData.nim,
+        telepon: editData.telepon,
+        photo: photoUrl
+      });
   
       const response = await axios.put(
         `${import.meta.env.VITE_REACT_APP_BASEURL}/api/users/${user.id}`,
@@ -196,17 +210,25 @@ const [error, setError] = useState({ show: false, message: '' });
         }
       );
   
+      // Perubahan utama di sini - tidak perlu throw error jika sukses
       if (response.data.message === "User berhasil diperbarui") {
         // Update local state
         setUser(prev => ({
           ...prev,
-          ...editData
+          nama: editData.nama,
+          email: editData.email,
+          nim: editData.nim,
+          telepon: editData.telepon,
+          photo: photoUrl
         }));
         
-        setPhotoPreview(editData.photo);
+        setPhotoPreview(photoUrl);
         setIsEditing(false);
         
-        setSuccess({ show: true, message: response.data.message });
+        setSuccess({ 
+          show: true, 
+          message: response.data.message 
+        });
         setError({ show: false, message: '' });
         
         setTimeout(() => setSuccess(prev => ({ ...prev, show: false })), 3000);
@@ -215,7 +237,9 @@ const [error, setError] = useState({ show: false, message: '' });
       console.error('Update error:', error);
       setError({ 
         show: true,
-        message: error.response?.data?.error || "Gagal memperbarui profil"
+        message: error.response?.data?.message || 
+                 error.message || 
+                 "Terjadi kesalahan saat memperbarui profil"
       });
       setSuccess({ show: false, message: '' });
     } finally {
@@ -230,23 +254,6 @@ const [error, setError] = useState({ show: false, message: '' });
       </div>
     );
   }
-
-  // if (error) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center">
-  //       <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative max-w-md">
-  //         <strong className="font-bold">Error!</strong>
-  //         <span className="block sm:inline"> {error.message}</span>
-  //         <button 
-  //           onClick={() => navigate('/login')}
-  //           className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-  //         >
-  //           Kembali ke Login
-  //         </button>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   {error.show && (
     <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">

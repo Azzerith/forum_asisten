@@ -339,7 +339,7 @@ export default function HomePage() {
     return (
       <Layout>
         <main className="flex-1 p-6">
-        <h1 className="text-xl font-bold text-gray-800 mb-2">Selamat Datang</h1>
+        <h1 className="text-xl font-bold text-gray-800 mb-2">Selamat Datang, {user.nama}!</h1>
           <div className="max-w-3xl mx-auto">
             <div className="bg-white rounded-xl shadow-md overflow-hidden border border-red-200">
               <div className="p-6 md:p-8">

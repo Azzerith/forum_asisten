@@ -88,7 +88,7 @@ export function Navbar({ toggleSidebar }) {
                     />
                   ) : null}
                   {(!user?.photo || (user?.photo && !document.querySelector(`img[src="${user.photo}"]`))) && (
-                  <div className="w-8 h-8 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center font-medium hover:bg-blue-200 transition-colors">
+                  <div className="w-8 h-8 bg-white text-blue-800 rounded-full flex items-center justify-center font-medium hover:bg-blue-200 transition-colors">
                     {user.nama?.[0] || (isAdmin ? "A" : "U")}
                   </div>)}
                   </div>
