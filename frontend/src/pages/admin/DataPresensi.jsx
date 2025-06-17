@@ -50,14 +50,14 @@ export default function DataPresensi() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/login");
+      navigate("/");
       return;
     }
 
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       if (payload.role !== "admin") {
-        navigate("/unauthorized");
+        navigate("/");
         return;
       }
       setUser({
@@ -68,7 +68,7 @@ export default function DataPresensi() {
     } catch (err) {
       console.error("Token parsing error:", err);
       localStorage.removeItem("token");
-      navigate("/login");
+      navigate("/");
     }
   }, [navigate]);
 
@@ -421,7 +421,21 @@ export default function DataPresensi() {
                               <td className="px-6 py-4">
                                 <div className="flex items-center">
                                   <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <FiUser className="text-blue-600" />
+                                  {item.asisten?.photo ? (
+                                      <img
+                                        src={item.asisten.photo}
+                                        alt={item.asisten.nama}
+                                        className="h-full w-full object-cover rounded-full border-2 border-white"
+                                        onError={(e) => {
+                                          e.target.onerror = null;
+                                          e.target.src = "https://via.placeholder.com/100?text=No+Photo";
+                                        }}
+                                      />
+                                    ) : (
+                                      <div className="h-full w-full flex items-center justify-center">
+                                        <FiUser className="text-gray-500" />
+                                      </div>
+                                    )}
                                   </div>
                                   <div className="ml-4">
                                     <div className="text-sm font-medium text-gray-900">
@@ -541,9 +555,17 @@ export default function DataPresensi() {
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-2">Asisten</h4>
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <FiUser className="text-blue-600 text-xl" />
-                      </div>
+                    <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
+                          {currentPresensi.asisten?.photo ? (
+                            <img 
+                              src={currentPresensi.asisten.photo} 
+                              alt={currentPresensi.asisten.nama} 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <FiUser className="text-blue-600 w-5 h-5" />
+                          )}
+                        </div>
                       <div className="ml-4">
                         <p className="text-lg font-medium text-gray-900">
                           {currentPresensi.asisten?.nama || 'N/A'}

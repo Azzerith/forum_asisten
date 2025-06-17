@@ -303,7 +303,7 @@ export default function DataUser() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <FiUser className="text-gray-500 w-5 h-5" />
+              <FiUser className="text-blue-600 w-5 h-5" />
             )}
           </div>
         {user.status.toLowerCase() === "aktif" ? (
