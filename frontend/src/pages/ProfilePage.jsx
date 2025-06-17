@@ -356,7 +356,7 @@ const [error, setError] = useState({ show: false, message: '' });
                   )}
                 </div>
                 {isEditing && (
-                  <label className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-md cursor-pointer hover:bg-gray-100">
+                  <label className="absolute bottom-0 right-19 bg-white p-2 rounded-full shadow-md cursor-pointer hover:bg-gray-100">
                     <FiCamera className="w-5 h-5 text-blue-600" />
                     <input 
                       type="file" 
