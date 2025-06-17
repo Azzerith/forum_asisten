@@ -10,6 +10,7 @@ import {
   FiClock, 
   FiCalendar,
   FiLogOut,
+  FiUser,
 } from "react-icons/fi";
 
 
@@ -19,9 +20,44 @@ export function Sidebar({ isOpen, setIsOpen }) {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      setUser(payload);
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser({
+          nama: parsedUser.nama || "User",
+          nim: parsedUser.nim || "NIM",
+          photo: parsedUser.photo || null,
+          role: parsedUser.role || "asisten",
+        });
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+        if (token) {
+          try {
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            setUser({
+              nama: payload.nama || "User",
+              nim: payload.nim || "NIM",
+              photo: payload.photo || null,
+              role: payload.role || "asisten",
+            });
+          } catch (tokenError) {
+            console.error("Error parsing token:", tokenError);
+          }
+        }
+      }
+    } else if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        setUser({
+          nama: payload.nama || "User",
+          nim: payload.nim || "NIM",
+          photo: payload.photo || null,
+          role: payload.role || "asisten",
+        });
+      } catch (error) {
+        console.error("Error parsing token:", error);
+      }
     }
   }, []);
 
@@ -122,9 +158,27 @@ export function Sidebar({ isOpen, setIsOpen }) {
                       : "bg-white/10 hover:bg-white/20"
                   }`}
                 >
-                  <div className="w-10 h-10 bg-white text-blue-900 font-bold rounded-full flex items-center justify-center uppercase shadow-md">
-                    {user.nama?.[0] || "U"}
-                  </div>
+                  <div className="w-10 h-10 border-2 border-white rounded-full flex items-center justify-center shadow-md overflow-hidden bg-white">
+                  {user?.photo ? (
+                    <img
+                      src={user.photo}
+                      alt={user?.nama ? `Foto profil ${user.nama}` : "Foto profil"}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  ) : null}
+                  
+                  {(!user?.photo || (user?.photo && !document.querySelector(`img[src="${user.photo}"]`))) && (
+                    <div 
+                      className="w-full h-full flex items-center justify-center text-blue-900 font-bold"
+                      aria-label={user?.nama || "Profile"}
+                    >
+                      {user?.nama?.[0]?.toUpperCase() || <FiUser className="h-5 w-5" />}
+                    </div>
+                  )}
+                </div>
                   <div className="text-sm">
                     <p className="font-semibold">{user.nama || "User"}</p>
                     <p className="text-xs opacity-80">{user.nim || "NIM"}</p>

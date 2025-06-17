@@ -9,13 +9,40 @@ export function Navbar({ toggleSidebar }) {
   
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
+    const userData = localStorage.getItem("user");
+    if (userData) {
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        const parsedUser = JSON.parse(userData);
         setUser({
-          nama: payload.nama,
-          role: payload.role,
-          nim: payload.nim
+          nama: parsedUser.nama || "User",
+          nim: parsedUser.nim || "NIM",
+          photo: parsedUser.photo || null,
+          role: parsedUser.role || "asisten",
+        });
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+        if (token) {
+          try {
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            setUser({
+              nama: payload.nama || "User",
+              nim: payload.nim || "NIM",
+              photo: payload.photo || null,
+              role: payload.role || "asisten",
+            });
+          } catch (tokenError) {
+            console.error("Error parsing token:", tokenError);
+          }
+        }
+      }
+    } else if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        setUser({
+          nama: payload.nama || "User",
+          nim: payload.nim || "NIM",
+          photo: payload.photo || null,
+          role: payload.role || "asisten",
         });
       } catch (error) {
         console.error("Error parsing token:", error);
@@ -49,9 +76,22 @@ export function Navbar({ toggleSidebar }) {
             to={isAdmin ? "/admin/home" : "/profile"} 
             className="flex items-center gap-2"
           >
-            <div className="w-8 h-8 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center font-medium hover:bg-blue-200 transition-colors">
-              {user.nama?.[0] || (isAdmin ? "A" : "U")}
-            </div>
+            <div className="w-10 h-10 border-2 border-white rounded-full flex items-center justify-center shadow-md overflow-hidden bg-white">
+                    {user?.photo ? (
+                    <img
+                      src={user.photo}
+                      alt={user?.nama ? `Foto profil ${user.nama}` : "Foto profil"}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  ) : null}
+                  {(!user?.photo || (user?.photo && !document.querySelector(`img[src="${user.photo}"]`))) && (
+                  <div className="w-8 h-8 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center font-medium hover:bg-blue-200 transition-colors">
+                    {user.nama?.[0] || (isAdmin ? "A" : "U")}
+                  </div>)}
+                  </div>
             <span className="hidden md:inline text-sm font-medium">
               {user.nama || (isAdmin ? "Admin" : "User")}
             </span>
