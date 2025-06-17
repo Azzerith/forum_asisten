@@ -39,6 +39,7 @@ const DataRekapitulasi = () => {
   const [formData, setFormData] = useState({
     tipe_honor: ''
   });
+  
 
   // Color mappings
   const statusColors = {
@@ -374,6 +375,7 @@ const submitUpdate = async () => {
     });
     setEditModal(true);
   };
+  
 
   if (loading) {
     return (
@@ -494,66 +496,71 @@ const submitUpdate = async () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {rekapitulasiData.map((item, index) => (
-                  <tr key={`${item.asisten_id}-${index}`} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-medium">{item.asisten.nama.charAt(0)}</span>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{item.asisten.nama}</div>
-                          <div className="text-sm text-gray-500">{item.asisten.nim}</div>
-                        </div>
+              {[...rekapitulasiData]
+              .sort((a, b) => sortOrder === 'asc' 
+                ? (a.total_honor || 0) - (b.total_honor || 0)
+                : (b.total_honor || 0) - (a.total_honor || 0)
+              )
+              .map((item, index) => (
+                <tr key={`${item.asisten_id}-${index}`} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 font-medium">{item.asisten.nama.charAt(0)}</span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors.hadir}`}>
-                        {item.jumlah_hadir}x
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors.izin}`}>
-                        {item.jumlah_izin}x
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors.alpha}`}>
-                        {item.jumlah_alpha}x
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${jenisColors.pengganti}`}>
-                        {item.jumlah_pengganti}x
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        item.tipe_honor ? 
-                        tipeHonorColors[item.tipe_honor] || 'bg-gray-100 text-gray-800' : 
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {item.tipe_honor ? `Tipe ${item.tipe_honor}` : 'Belum di-set'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      Rp {item.honor_pertemuan.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                      Rp {item.total_honor.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(item)}
-                        className="text-indigo-600 hover:text-indigo-900"
-                      >
-                        <FiEdit2 />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">{item.asisten.nama}</div>
+                        <div className="text-sm text-gray-500">{item.asisten.nim}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors.hadir}`}>
+                      {item.jumlah_hadir}x
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors.izin}`}>
+                      {item.jumlah_izin}x
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors.alpha}`}>
+                      {item.jumlah_alpha}x
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${jenisColors.pengganti}`}>
+                      {item.jumlah_pengganti}x
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      item.tipe_honor ? 
+                      tipeHonorColors[item.tipe_honor] || 'bg-gray-100 text-gray-800' : 
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {item.tipe_honor ? `Tipe ${item.tipe_honor}` : 'Belum di-set'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    Rp {item.honor_pertemuan.toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                    Rp {item.total_honor.toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => handleEdit(item)}
+                      className="text-indigo-600 hover:text-indigo-900"
+                    >
+                      <FiEdit2 />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
           ):groupBy === 'tipe' ? (
             Object.values(groupedData).map(group => (
               <div key={group.key} className="mb-6">
