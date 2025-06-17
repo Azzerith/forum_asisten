@@ -165,25 +165,22 @@ export default function DataPresensi() {
   const groupedPresensi = groupPresensi();
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus data presensi ini?")) return;
-
     try {
-      setLoading(true);
-      await axios.delete(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/presensi/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-
-      // Refresh data
-      const response = await axios.get(`${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/presensi`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      setPresensi(response.data);
+      const response = await axios.delete(
+        `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/presensi/${id}`,
+        {
+          headers: { 
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          }
+        }
+      );
+      
+      // Update state after successful delete
+      setPresensi(presensi.filter(item => item.id !== id));
       showSuccess("Presensi berhasil dihapus");
     } catch (err) {
       console.error("Delete error:", err);
-      showError(err.response?.data?.message || "Gagal menghapus data");
-    } finally {
-      setLoading(false);
+      showError(err.response?.data?.error || "Gagal menghapus presensi");
     }
   };
 
@@ -210,7 +207,7 @@ export default function DataPresensi() {
   
       const response = await axios.put(
         `${import.meta.env.VITE_REACT_APP_BASEURL}/api/admin/presensi/${id}`,
-        JSON.stringify({ status: tempStatus }), // Pastikan di-stringify
+        { status: tempStatus },
         {
           headers: { 
             Authorization: `Bearer ${localStorage.getItem("token")}`,

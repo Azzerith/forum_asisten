@@ -141,10 +141,10 @@ func UpdatePresensi(c *gin.Context) {
         return
     }
     
-    if err := c.ShouldBindJSON(&input); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
-        return
-    }
+    // if err := c.ShouldBindJSON(&input); err != nil {
+    //     c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
+    //     return
+    // }
 
     // [4] Validasi status
     validStatus := map[string]bool{"hadir": true, "izin": true, "alpha": true}
