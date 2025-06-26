@@ -1,6 +1,4 @@
-# FORUM_ASISTEN
-
-_Empowering Communities Through Seamless Collaboration_
+# E-Presensi FORUM ASISTEN
 
 ![Last Commit](https://img.shields.io/badge/last%20commit-last%20sunday-blue) ![JavaScript](https://img.shields.io/badge/javascript-88.3%25-yellow) ![Languages](https://img.shields.io/badge/languages-4-blue)
 
@@ -23,53 +21,112 @@ _Empowering Communities Through Seamless Collaboration_
 
 ---
 
-## 📚 Table of Contents
+## 📚 Daftar Isi
 
-- [Overview](#overview)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Usage](#usage)
-  - [Testing](#testing)
-
----
-
-## 🔍 Overview
-
-**forum_asisten** is a full-stack platform tailored for educational institutions to manage schedules, attendance, and user data efficiently. It combines a robust backend with a modern React frontend, ensuring seamless data flow and user experience.
-
-### Why forum_asisten?
-
-This project aims to streamline academic management processes through reliable dependency handling and modular architecture. The core features include:
-
-- 🔐 **Role-Based Access Control**: Secure your system with JWT authentication and role-specific route protections.
-- 🧭 **API Route Organization**: Well-structured endpoints for user, schedule, and attendance management.
-- 🛠️ **Dependency Integrity**: Ensures consistent builds with `go.sum` and `go.mod`.
-- 🎨 **Modern Frontend**: React and Tailwind CSS setup for a responsive, dynamic user interface.
-- 📊 **Administrative Dashboards**: Visualize system metrics and manage data effortlessly.
-- 🧰 **Utility Functions**: Date handling and state management for a smooth development experience.
+- [Gambaran Umum](#gambaran-umum)
+- [Mulai Cepat](#mulai-cepat)
+  - [Prasyarat](#prasyarat)
+  - [Instalasi](#instalasi)
+  - [Penggunaan](#penggunaan)
+  - [Pengujian](#pengujian)
 
 ---
 
-## 🚀 Getting Started
+## 🔍 Gambaran Umum
 
-### Prerequisites
+**forum_asisten** adalah platform full-stack yang dirancang untuk institusi pendidikan guna mengelola jadwal, presensi, dan data pengguna secara efisien. Aplikasi ini menggabungkan backend yang kuat menggunakan Golang dan Gin dengan frontend modern berbasis React, memastikan alur data yang lancar dan pengalaman pengguna yang optimal.
 
-This project requires the following dependencies:
+### Kenapa menggunakan forum_asisten?
 
-- **Programming Language**: JavaScript, Golang
-- **Package Manager**: Go modules, NPM
+Proyek ini bertujuan untuk menyederhanakan manajemen akademik melalui penanganan dependensi yang andal dan arsitektur modular. Fitur utama meliputi:
+
+- 🔐 **Kontrol Akses Berbasis Peran**: Sistem autentikasi JWT dengan perlindungan rute khusus sesuai peran pengguna.
+- 🧭 **Organisasi Rute API**: Endpoint yang terstruktur untuk manajemen pengguna, jadwal, dan presensi.
+- 🛠️ **Integritas Dependensi**: Menjamin build yang konsisten dengan `go.mod` dan `go.sum`.
+- 🎨 **Frontend Modern**: React & Tailwind CSS untuk tampilan antarmuka yang responsif dan dinamis.
+- 📊 **Dashboard Admin**: Menyajikan metrik sistem dan manajemen data dengan mudah.
+- 🧰 **Fungsi Utilitas**: Penanganan tanggal dan manajemen state untuk pengalaman pengembangan yang lancar.
 
 ---
 
-### 🛠️ Installation
+## 🚀 Mulai Cepat
 
-Build `forum_asisten` from the source and install dependencies:
+### Prasyarat
 
-1. **Clone the repository:**
+Pastikan Anda memiliki:
+
+- **Bahasa Pemrograman**: JavaScript & Go
+- **Package Manager**: Go modules & npm
+
+---
+
+### ⚙️ Instalasi
+
+1. **Klon repositori ini:**
+
    ```bash
    git clone https://github.com/Azzerith/forum_asisten
+   ```
 
+2. **Masuk ke direktori proyek:**
+
+   ```bash
+   cd forum_asisten
+   ```
+
+3. **Install dependensi:**
+
+   Menggunakan **go modules**:
+
+   ```bash
+   go build
+   ```
+
+   Menggunakan **npm**:
+
+   ```bash
+   npm install
+   ```
+
+---
+
+## ▶️ Penggunaan
+
+Jalankan proyek menggunakan perintah berikut:
+
+Menggunakan **go modules**:
+
+```bash
+go run {entrypoint}
+```
+
+> Ganti `{entrypoint}` dengan file Go utama Anda, seperti `main.go`.
+
+Menggunakan **npm**:
+
+```bash
+npm start
+```
+
+---
+
+## 🧪 Pengujian
+
+**forum_asisten** menggunakan `{test_framework}` untuk menjalankan pengujian. Jalankan tes dengan:
+
+Menggunakan **go modules**:
+
+```bash
+go test ./...
+```
+
+Menggunakan **npm**:
+
+```bash
+npm test
+```
+
+---
 
 u can accsess ini there 
 http://forum-asisten.vercel.app/
