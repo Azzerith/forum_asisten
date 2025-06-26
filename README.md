@@ -98,8 +98,6 @@ Menggunakan **go modules**:
 go run main.go
 ```
 
-> Ganti `{entrypoint}` dengan file Go utama Anda, seperti `main.go`.
-
 Menggunakan **npm**:
 
 ```bash
