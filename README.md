@@ -5,10 +5,8 @@
 ## 🛠 Built with the tools and technologies:
 
 ![JSON](https://img.shields.io/badge/-JSON-black)
-![Markdown](https://img.shields.io/badge/-Markdown-black)
 ![npm](https://img.shields.io/badge/-npm-red)
 ![JavaScript](https://img.shields.io/badge/-JavaScript-yellow)
-![Now](https://img.shields.io/badge/-NOW-black)
 ![Go](https://img.shields.io/badge/-Go-00ADD8)
 ![React](https://img.shields.io/badge/-React-61DAFB)
 ![Gin](https://img.shields.io/badge/-Gin-00ACC1)
@@ -97,7 +95,7 @@ Jalankan proyek menggunakan perintah berikut:
 Menggunakan **go modules**:
 
 ```bash
-go run {entrypoint}
+go run main.go
 ```
 
 > Ganti `{entrypoint}` dengan file Go utama Anda, seperti `main.go`.
@@ -105,7 +103,7 @@ go run {entrypoint}
 Menggunakan **npm**:
 
 ```bash
-npm start
+npm run dev
 ```
 
 ---
