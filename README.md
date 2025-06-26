@@ -34,9 +34,9 @@
 
 **forum_asisten** adalah platform full-stack yang dirancang untuk institusi pendidikan guna mengelola jadwal, presensi, dan data pengguna secara efisien. Aplikasi ini menggabungkan backend yang kuat menggunakan Golang dan Gin dengan frontend modern berbasis React, memastikan alur data yang lancar dan pengalaman pengguna yang optimal.
 
-### Kenapa menggunakan forum_asisten?
+### Kenapa menggunakan e-presensi forum asisten?
 
-Proyek ini bertujuan untuk menyederhanakan manajemen akademik melalui penanganan dependensi yang andal dan arsitektur modular. Fitur utama meliputi:
+Proyek ini bertujuan untuk menyederhanakan manajemen rekapitulasi presensi asisten praktikum melalui penanganan dependensi yang andal dan arsitektur modular. Fitur utama meliputi:
 
 - 🔐 **Kontrol Akses Berbasis Peran**: Sistem autentikasi JWT dengan perlindungan rute khusus sesuai peran pengguna.
 - 🧭 **Organisasi Rute API**: Endpoint yang terstruktur untuk manajemen pengguna, jadwal, dan presensi.
