@@ -126,5 +126,5 @@ npm test
 
 ---
 
-u can accsess ini there 
+u can accsess in there 
 http://forum-asisten.vercel.app/
