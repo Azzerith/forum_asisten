@@ -32,7 +32,7 @@
 
 ## 🔍 Gambaran Umum
 
-**forum_asisten** adalah platform full-stack yang dirancang untuk institusi pendidikan guna mengelola jadwal, presensi, dan data pengguna secara efisien. Aplikasi ini menggabungkan backend yang kuat menggunakan Golang dan Gin dengan frontend modern berbasis React, memastikan alur data yang lancar dan pengalaman pengguna yang optimal.
+**e-presensi forum asisten** adalah platform full-stack yang dirancang untuk institusi pendidikan guna mengelola jadwal, presensi, dan data pengguna secara efisien. Aplikasi ini menggabungkan backend yang kuat menggunakan Golang dan Gin dengan frontend modern berbasis React, memastikan alur data yang lancar dan pengalaman pengguna yang optimal.
 
 ### Kenapa menggunakan e-presensi forum asisten?
 
